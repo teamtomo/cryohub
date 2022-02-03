@@ -5,9 +5,11 @@ class ParseError(RuntimeError):
     pass
 
 
-# a list of commonly used base names for starfiles in regex form
+# a list of commonly used base names for paths in regex form
 common_name_regexes = (
     r'TS_\d+',
+    r'series_\d+',
+    r'_\d+',
     r'\d+',
 )
 

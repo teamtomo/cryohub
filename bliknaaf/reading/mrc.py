@@ -1,20 +1,19 @@
-import logging
-
 import mrcfile
 import dask.array as da
 import numpy as np
-
-from ...datablocks import ImageBlock
-from ..utils import guess_name
 from numpy.lib.recfunctions import structured_to_unstructured
 
+from ..utils.generic import guess_name
 
-logger = logging.getLogger(__name__)
 
-
-def read_mrc(image_path, name_regex=None, lazy=True, **kwargs):
+def read_mrc(
+    image_path,
+    name_regex=None,
+    lazy=True,
+    **kwargs
+):
     """
-    read an mrc file and return an ImageBlock
+    read an mrc file
     """
     name = guess_name(image_path, name_regex)
 
@@ -26,6 +25,4 @@ def read_mrc(image_path, name_regex=None, lazy=True, **kwargs):
 
         pixel_size = structured_to_unstructured(mrc.voxel_size)[::-1]
 
-    ib = ImageBlock(data=data, pixel_size=pixel_size, name=name)
-    logger.debug(f'succesfully read "{image_path}", {lazy=}')
-    return ib
+    return data, {'name': name, 'pixel_size': pixel_size}

@@ -1,11 +1,18 @@
 import numpy as np
+import pandas as pd
+from scipy.spatial.transform import Rotation
 
-from ..utils import guess_name
-from ...datablocks import ParticleBlock
+from ..utils.generic import guess_name
+from ..utils.euler import RELION_EULER
 
 
-def read_box(box_path, name_regex=None, pixel_size=1, **kwargs):
-    data = np.loadtxt(box_path)
-    orientations = np.tile(np.identity(3), (len(data), 1, 1))
-    name = guess_name(box_path, name_regex)
-    return ParticleBlock(data, orientations, name=name, pixel_size=pixel_size)
+def read_box(
+    path,
+    name_regex=None,
+    **kwargs,
+):
+    coords = np.loadtxt(path)
+    rot = Rotation.identity(len(coords)).as_euler(RELION_EULER)
+    name = guess_name(path, name_regex)
+    df = pd.DataFrame()
+    return coords, rot, {'name': name}

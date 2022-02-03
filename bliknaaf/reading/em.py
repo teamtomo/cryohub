@@ -1,19 +1,19 @@
-import logging
-
-import emfile
-import dask.array as da
 import numpy as np
+import pandas as pd
+import dask.array as da
+import emfile
 
-from ...datablocks import ImageBlock
-from ..utils import guess_name
+from ..utils.generic import guess_name
 
 
-logger = logging.getLogger(__name__)
-
-
-def read_em(image_path, name_regex=None, lazy=True, **kwargs):
+def read_em(
+    image_path,
+    name_regex=None,
+    lazy=True,
+    **kwargs
+):
     """
-    read an em file and return an ImageBlock
+    read an em image file
     """
     name = guess_name(image_path, name_regex)
 
@@ -26,6 +26,4 @@ def read_em(image_path, name_regex=None, lazy=True, **kwargs):
 
     pixel_size = header['OBJ']
 
-    ib = ImageBlock(data=data, pixel_size=pixel_size, name=name)
-    logger.debug(f'succesfully read "{image_path}", {lazy=}')
-    return ib
+    return data, {'name': name, 'pixel_size': pixel_size}

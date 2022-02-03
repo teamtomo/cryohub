@@ -1,23 +1,19 @@
 import numpy as np
-import pandas as pd
+from scipy.spatial.transform import Rotation
 import dynamotable
-import eulerangles
 
-from ..utils import rotangle2matrix, guess_name
-from ...datablocks import ParticleBlock
+from ..utils.generic import guess_name
+from ..utils.euler import DYNAMO_EULER, DYNAMO_TILT
 
 
-def euler2matrix_dynamo(euler_angles):
-    """Convert (n, 3) array of Dynamo euler angles to rotation matrices
-    Resulting rotation matrices rotate references into particles
-    """
-    rotation_matrices = eulerangles.euler2matrix(euler_angles,
-                                                 axes='zxz',
-                                                 intrinsic=False,
-                                                 right_handed_rotation=True)
+COORD_HEADERS = ['x', 'y', 'z']
+SHIFT_HEADERS = ['dx', 'dy', 'dz']
+EULER_HEADERS = {
+    3: ['tdrot', 'tilt', 'narot'],
+    2: ['tilt']  # TODO: 2d column name might be wrong!
+}
 
-    rotation_matrices = rotation_matrices.swapaxes(-2, -1)
-    return rotation_matrices
+ALL_HEADERS = COORD_HEADERS + SHIFT_HEADERS + EULER_HEADERS[3]
 
 
 def name_from_volume(volume_identifier, name_regex=None):
@@ -29,48 +25,49 @@ def name_from_volume(volume_identifier, name_regex=None):
         return guess_name(volume_identifier, name_regex)
 
 
-def read_tbl(table_path, table_map_file=None, name_regex=None, pixel_size=None, **kwargs):
+def read_tbl(
+    table_path,
+    table_map_file=None,
+    name_regex=None,
+    pixel_size=None,
+    **kwargs
+):
     """
-    Reads a dynamo format table file into a list of ParticleBlocks
+    Read particles from a dynamo format table file
     """
     df = dynamotable.read(table_path, table_map_file)
-
-    coord_headings = ['x', 'y', 'z']
-    shift_headings = ['dx', 'dy', 'dz']
-    euler_headings = {3: ['tdrot', 'tilt', 'narot'], 2: 'tilt'}  # TODO: 2d column name might be wrong!
 
     split_on = 'tomo'
     if 'tomo_file' in df.columns:
         split_on = 'tomo_file'
 
-    particleblocks = []
-
-    if coord_headings[-1] in df.columns:
+    if COORD_HEADERS[-1] in df.columns:
         dim = 3
     else:
         dim = 2
+
+    volumes = []
     for volume, df_volume in df.groupby(split_on):
         name = name_from_volume(volume, name_regex)
-        coords = df_volume[coord_headings[:dim]].to_numpy(dtype=float)
-        shifts = df_volume.get(shift_headings[:dim], pd.Series([0.0])).to_numpy()
-        coords += shifts
+        coords = np.asarray(df_volume[COORD_HEADERS[:dim]])
+        if (shifts := df_volume.get(SHIFT_HEADERS[:dim])) is not None:
+            coords += shifts
 
-        eulers = df_volume.get(euler_headings[dim], pd.Series([0])).to_numpy()
+        eulers = np.asarray(df_volume.get(EULER_HEADERS[dim]))
         if dim == 3:
-            rotation_matrices = euler2matrix_dynamo(eulers)
+            rot = Rotation.from_euler(DYNAMO_EULER, eulers)
         else:
-            rotation_matrices = rotangle2matrix(eulers)
+            rot = Rotation.from_euler(DYNAMO_TILT, eulers)
 
-        properties = {key: df_volume[key].to_numpy() for key in df.columns}
+        features = {
+            key: df_volume[key].to_numpy()
+            for key in df.columns
+            if key not in ALL_HEADERS
+        }
 
         if pixel_size is None:
-            pixel_size = np.array([1] * dim)
+            pixel_size = 1
 
-        particleblocks.append(ParticleBlock(positions_data=coords,
-                                            orientations_data=rotation_matrices,
-                                            properties_data=properties,
-                                            properties_protected=list(properties.keys()),
-                                            pixel_size=pixel_size,
-                                            name=name))
+        volumes.append((coords, rot, {'features': features, 'pixel_size': pixel_size, 'name': name}))
 
-    return particleblocks
+    return volumes

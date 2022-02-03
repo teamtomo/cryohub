@@ -1,86 +1,87 @@
 import numpy as np
 import pandas as pd
-import eulerangles
+from scipy.spatial.transform import Rotation
 import starfile
 
-from ..utils import guess_name, ParseError, rotangle2matrix
-from ...datablocks import ParticleBlock
+from ..utils.generic import guess_name, ParseError
+from ..utils.euler import RELION_EULER, RELION_PSI
 
 
-coord_headings = [f'rlnCoordinate{axis}' for axis in 'XYZ']
-euler_headings = {
+COORD_HEADERS = [f'rlnCoordinate{axis}' for axis in 'XYZ']
+EULER_HEADERS = {
     3: [f'rlnAngle{angle}' for angle in ('Rot', 'Tilt', 'Psi')],
-    2: 'rlnAnglePsi'
+    2: ['rlnAnglePsi']
 }
-shift_headings = {
-    'RELION 3.0': [f'rlnOrigin{axis}' for axis in 'XYZ'],
-    'RELION 3.1': [f'rlnOrigin{axis}Angst' for axis in 'XYZ']
+SHIFT_HEADERS = {
+    '3.0': [f'rlnOrigin{axis}' for axis in 'XYZ'],
+    '3.1': [f'rlnOrigin{axis}Angst' for axis in 'XYZ']
 }
 
-pixel_size_headings = {
-    'RELION 3.0': ['rlnDetectorPixelSize'],
-    'RELION 3.1': ['rlnImagePixelSize']
+PIXEL_SIZE_HEADERS = {
+    '3.0': ['rlnDetectorPixelSize'],
+    '3.1': ['rlnImagePixelSize']
 }
-micrograph_name_heading = 'rlnMicrographName'
+MICROGRAPH_NAME_HEADER = 'rlnMicrographName'
+
+ALL_HEADERS = (
+    COORD_HEADERS +
+    EULER_HEADERS[3] +
+    SHIFT_HEADERS['3.0'] +
+    SHIFT_HEADERS['3.1'] +
+    PIXEL_SIZE_HEADERS['3.0'] +
+    PIXEL_SIZE_HEADERS['3.1']
+)
 
 
-def extract_data(df, mode='RELION 3.1', name_regex=None, pixel_size=None, star_path='', **kwargs):
-    particleblocks = []
-    if coord_headings[-1] in df.columns:
+def extract_data(
+    df,
+    mode='3.1',
+    name_regex=None,
+    star_path='',
+):
+    """
+    extract particle data from a starfile dataframe
+    """
+    if COORD_HEADERS[-1] in df.columns:
         dim = 3
     else:
         dim = 2
 
-    if micrograph_name_heading in df.columns:
-        groups = df.groupby(micrograph_name_heading)
+    if MICROGRAPH_NAME_HEADER in df.columns:
+        groups = df.groupby(MICROGRAPH_NAME_HEADER)
     else:
         groups = [(star_path, df)]
 
+    volumes = []
     for micrograph_name, df_volume in groups:
-
         name = guess_name(micrograph_name, name_regex)
 
-        coords = df_volume[coord_headings[:dim]].to_numpy(dtype=float)
-        shifts = df_volume.get(shift_headings[mode][:dim], pd.Series([0.0])).to_numpy()
-        px_size = np.array(pixel_size or df_volume.get(pixel_size_headings[mode], pd.Series([1.0])).to_numpy())
-        # only relion 3.1 has shifts in angstroms
-        if mode == 'RELION 3.1':
-            shifts = shifts / px_size
-        coords -= shifts
+        coords = df_volume[COORD_HEADERS[:dim]].to_numpy(dtype=float)
 
-        eulers = df_volume.get(euler_headings[dim], pd.Series([0])).to_numpy()
+        pixel_size = np.asarray(df_volume.get(PIXEL_SIZE_HEADERS[mode], 1.0))
+
+        if (shifts := df_volume.get(SHIFT_HEADERS[mode][:dim])) is not None:
+            # only relion 3.1 has shifts in angstroms
+            if mode == '3.1':
+                shifts = shifts / pixel_size
+            coords -= shifts
+
+        eulers = np.asarray(df_volume.get(EULER_HEADERS[dim], 0))
         if dim == 3:
-            rotation_matrices = euler2matrix(eulers)
+            rot = Rotation.from_euler(RELION_EULER, eulers)
         else:
-            rotation_matrices = rotangle2matrix(eulers)
+            rot = Rotation.from_euler(RELION_PSI, eulers)
 
-        properties = {key: df_volume[key].to_numpy() for key in df.columns}
+        features = pd.DataFrame({
+            key: df_volume[key].to_numpy()
+            for key in df.columns
+            if key not in ALL_HEADERS
+        })
 
         # TODO: better way to handle pizel size? Now we can only account for uniform size
-        pixel_size = px_size.flatten()[0]
-        pixel_size = [pixel_size] * dim
-        particleblocks.append(ParticleBlock(positions_data=coords,
-                                            orientations_data=rotation_matrices,
-                                            properties_data=properties,
-                                            properties_protected=list(properties.keys()),
-                                            pixel_size=np.array(pixel_size),
-                                            name=name))
+        volumes.append((coords, rot, {'features': features, 'pixel_size': pixel_size, 'name': name}))
 
-    return particleblocks
-
-
-def euler2matrix(euler_angles):
-    """
-    Convert (n, 3) array of RELION euler angles to rotation matrices
-    Resulting rotation matrices rotate references into particles
-    """
-    rotation_matrices = eulerangles.euler2matrix(euler_angles,
-                                                 axes='zyz',
-                                                 intrinsic=True,
-                                                 right_handed_rotation=True)
-
-    rotation_matrices = rotation_matrices.swapaxes(-2, -1)
-    return rotation_matrices
+    return volumes
 
 
 def parse_relion30(raw_data, **kwargs):
@@ -91,7 +92,7 @@ def parse_relion30(raw_data, **kwargs):
         raise ParseError("Cannot parse as RELION 3.0 format STAR file")
 
     df = list(raw_data.values())[0]
-    return extract_data(df, mode='RELION 3.0', **kwargs)
+    return extract_data(df, mode='3.0', **kwargs)
 
 
 def parse_relion31(raw_data, **kwargs):
@@ -102,7 +103,7 @@ def parse_relion31(raw_data, **kwargs):
         raise ParseError("Cannot parse as RELION 3.1 format STAR file")
 
     df = raw_data['particles'].merge(raw_data['optics'])
-    return extract_data(df, mode='RELION 3.1', **kwargs)
+    return extract_data(df, mode='3.1', **kwargs)
 
 
 reader_functions = {
