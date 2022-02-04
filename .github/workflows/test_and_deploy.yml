@@ -31,8 +31,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools tox tox-gh-actions
       - name: Test with tox
-        with:
-          run: tox
+        run: tox
         env:
           PLATFORM: ${{ matrix.platform }}
       - name: Coverage
