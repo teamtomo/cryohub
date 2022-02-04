@@ -27,9 +27,12 @@ def test_read_path(tmp_path):
         'rlnMicrographName': ['test1', 'test2'],
     })
     star_path = tmp_path / 'test.star'
-    starfile.new(df, star_path)
+    starfile.write(df, star_path)
 
     data = read(tmp_path / '*', name_regex=r'test\d')
 
     assert len(data) == 4
-    # assert len(data) == 2
+
+    sources = [d.source for d in data]
+    for s in (mrc_path1, mrc_path2, star_path):
+        assert s in sources

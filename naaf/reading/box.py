@@ -1,9 +1,9 @@
 import numpy as np
-import pandas as pd
 from scipy.spatial.transform import Rotation
 
 from ..utils.generic import guess_name
-from ..utils.euler import RELION_EULER
+from ..utils.constants import Relion
+from ..data import Particles
 
 
 def read_box(
@@ -12,7 +12,11 @@ def read_box(
     **kwargs,
 ):
     coords = np.loadtxt(path)
-    rot = Rotation.identity(len(coords)).as_euler(RELION_EULER)
+    rot = Rotation.identity(len(coords)).as_euler(Relion.EULER)
     name = guess_name(path, name_regex)
-    df = pd.DataFrame()
-    return coords, rot, {'name': name}
+
+    return Particles(
+        coords=coords,
+        rot=rot,
+        name=name,
+    )

@@ -2,6 +2,8 @@ import re
 from typing import Iterable
 from pathlib import Path
 
+from ..data import Data
+
 
 class ParseError(RuntimeError):
     pass
@@ -21,6 +23,8 @@ def guess_name(string, name_regex=None):
     guess an appropriate name based on the input string
     and a list of regexes in order of priority
     """
+    if isinstance(string, Path):
+        string = string.stem
     regexes = list(common_name_regexes)
     if name_regex is not None:
         regexes.insert(0, name_regex)
@@ -36,7 +40,7 @@ def listify(obj):
     transform input into an appropriate list, unless already list-like
     """
     if isinstance(obj, Iterable):
-        if isinstance(obj, (str, Path)):
+        if isinstance(obj, (str, Path, Data)):
             return [obj]
         else:
             return list(obj)

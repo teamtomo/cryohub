@@ -1,9 +1,9 @@
 import numpy as np
-import pandas as pd
 import dask.array as da
 import emfile
 
 from ..utils.generic import guess_name
+from ..data import Image
 
 
 def read_em(
@@ -24,6 +24,10 @@ def read_em(
     else:
         data = np.asarray(data)
 
-    pixel_size = header['OBJ']
+    pixel_size = header['OBJ'] or None
 
-    return data, {'name': name, 'pixel_size': pixel_size}
+    return Image(
+        data=data,
+        name=name,
+        pixel_size=pixel_size,
+    )

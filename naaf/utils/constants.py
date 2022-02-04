@@ -16,13 +16,16 @@ class Relion:
         '3.1': ['rlnImagePixelSize']
     }
     MICROGRAPH_NAME_HEADER = 'rlnMicrographName'
+    OPTICS_GROUP_HEADER = 'rlnOpticsGroup'
     ALL_HEADERS = (
         COORD_HEADERS +
         EULER_HEADERS[3] +
         SHIFT_HEADERS['3.0'] +
         SHIFT_HEADERS['3.1'] +
         PIXEL_SIZE_HEADERS['3.0'] +
-        PIXEL_SIZE_HEADERS['3.1']
+        PIXEL_SIZE_HEADERS['3.1'] +
+        [MICROGRAPH_NAME_HEADER] +
+        [OPTICS_GROUP_HEADER]
     )
 
     EULER = 'ZYZ'

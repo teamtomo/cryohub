@@ -4,7 +4,8 @@ from scipy.spatial.transform import Rotation
 import starfile
 
 from ..utils.generic import guess_name, ParseError
-from ..utils.euler import RELION_EULER, RELION_PSI
+from ..utils.constants import Relion
+from ..data import Particles
 
 
 def extract_data(
@@ -12,6 +13,7 @@ def extract_data(
     mode='3.1',
     name_regex=None,
     star_path='',
+    **kwargs,
 ):
     """
     extract particle data from a starfile dataframe
@@ -26,21 +28,26 @@ def extract_data(
     else:
         groups = [(star_path, df)]
 
-    volumes = []
+    data = []
     for micrograph_name, df_volume in groups:
         name = guess_name(micrograph_name, name_regex)
 
-        coords = df_volume[Relion.COORD_HEADERS[:dim]].to_numpy(dtype=float)
+        coords = np.asarray(df_volume[Relion.COORD_HEADERS[:dim]], dtype=float)
+        shifts = np.asarray(df_volume.get(Relion.SHIFT_HEADERS[mode][:dim], 0), dtype=float)
 
-        pixel_size = np.asarray(df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode], 1.0))
+        pixel_size = df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode])
+        if pixel_size is not None:
+            pixel_size = np.asarray(pixel_size, dtype=float)
 
-        if (shifts := df_volume.get(Relion.SHIFT_HEADERS[mode][:dim])) is not None:
-            # only relion 3.1 has shifts in angstroms
-            if mode == '3.1':
-                shifts = shifts / pixel_size
-            coords -= shifts
+        # only relion 3.1 has shifts in angstroms
+        if mode == '3.1':
+            if pixel_size is None:
+                raise ParseError(f'Detected Relion 3.1 format, but no pixel size data!')
+            shifts = shifts / pixel_size
 
-        eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS[dim], 0))
+        coords -= shifts
+
+        eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS[dim], 0), dtype=float)
         if dim == 3:
             rot = Rotation.from_euler(Relion.EULER, eulers)
         else:
@@ -52,10 +59,17 @@ def extract_data(
             if key not in Relion.ALL_HEADERS
         })
 
-        # TODO: better way to handle pizel size? Now we can only account for uniform size
-        volumes.append((coords, rot, {'features': features, 'pixel_size': pixel_size, 'name': name}))
+        data.append(
+            Particles(
+                coords=coords,
+                rot=rot,
+                features=features,
+                pixel_size=pixel_size,
+                name=name,
+            )
+        )
 
-    return volumes
+    return data
 
 
 def parse_relion30(raw_data, **kwargs):

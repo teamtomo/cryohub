@@ -4,6 +4,7 @@ import numpy as np
 from numpy.lib.recfunctions import structured_to_unstructured
 
 from ..utils.generic import guess_name
+from ..data import Image
 
 
 def read_mrc(
@@ -23,6 +24,11 @@ def read_mrc(
         else:
             data = np.asarray(mrc.data)
 
-        pixel_size = structured_to_unstructured(mrc.voxel_size)[::-1]
+        # TODO: support anisotropic pixel sizes
+        pixel_size = structured_to_unstructured(mrc.voxel_size)[0] or None
 
-    return data, {'name': name, 'pixel_size': pixel_size}
+    return Image(
+        data=data,
+        name=name,
+        pixel_size=pixel_size
+    )

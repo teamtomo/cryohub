@@ -4,6 +4,7 @@ import dynamotable
 
 from ..utils.generic import guess_name
 from ..utils.constants import Dynamo
+from ..data import Particles
 
 
 def name_from_volume(volume_identifier, name_regex=None):
@@ -19,7 +20,6 @@ def read_tbl(
     table_path,
     table_map_file=None,
     name_regex=None,
-    pixel_size=None,
     **kwargs
 ):
     """
@@ -36,28 +36,26 @@ def read_tbl(
     else:
         dim = 2
 
-    volumes = []
+    data = []
     for volume, df_volume in df.groupby(split_on):
         name = name_from_volume(volume, name_regex)
-        coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]])
-        if (shifts := df_volume.get(Dynamo.SHIFT_HEADERS[:dim])) is not None:
-            coords += shifts
+        coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]], dtype=float)
+        shifts = np.asarray(df_volume.get(Dynamo.SHIFT_HEADERS[:dim], 0), dtype=float)
+        # XXX TODO: Check if like the was with Relion there's an issue with + or - shifts!
+        coords -= shifts
 
-        eulers = np.asarray(df_volume.get(Dynamo.EULER_HEADERS[dim]))
+        eulers = np.asarray(df_volume.get(Dynamo.EULER_HEADERS[dim], 0), dtype=float)
         if dim == 3:
             rot = Rotation.from_euler(Dynamo.EULER, eulers)
         else:
             rot = Rotation.from_euler(Dynamo.INPLANE, eulers)
 
-        features = {
-            key: df_volume[key].to_numpy()
-            for key in df.columns
-            if key not in Dynamo.ALL_HEADERS
-        }
+        data.append(
+            Particles(
+                coords=coords,
+                rot=rot,
+                name=name,
+            )
+        )
 
-        if pixel_size is None:
-            pixel_size = 1
-
-        volumes.append((coords, rot, {'features': features, 'pixel_size': pixel_size, 'name': name}))
-
-    return volumes
+    return data

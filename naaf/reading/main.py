@@ -35,8 +35,7 @@ def read_file(file_path, **kwargs):
                 try:
                     data = listify(func(file_path, **kwargs))
                     for d in data:
-                        # last item is metadata dictionary
-                        d[-1]['source'] = file_path
+                        d.source = file_path
                     return data
                 except ParseError:
                     # this will be raised by individual readers when the file can't be read.
