@@ -7,4 +7,5 @@ def write_em(image, file_path, overwrite=False):
     """
     if not file_path.endswith('.em'):
         file_path = file_path + '.em'
-    emfile.write(file_path, image, header_params={}, overwrite=overwrite)
+    # TODO: pass pixel size and other stuff to header
+    emfile.write(file_path, image.data, header_params={}, overwrite=overwrite)

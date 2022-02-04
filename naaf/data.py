@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional, Union
 
 from pydantic import BaseModel
 import numpy as np
@@ -7,13 +8,16 @@ import dask.array as da
 from scipy.spatial.transform import Rotation
 
 
+Array = Union[np.ndarray, da.Array]
+
+
 class Data(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    name: str | None = None
-    source: Path | None = None
-    pixel_size: float | None = None
+    name: Optional[str] = None
+    source: Optional[Path] = None
+    pixel_size: Optional[float] = None
 
     def __eq__(self, other):
         if not isinstance(other, BaseModel):
@@ -23,7 +27,7 @@ class Data(BaseModel):
         for f, v in s.items():
             if f not in o:
                 return False
-            elif isinstance(v, (np.ndarray, da.Array)):
+            elif isinstance(v, Array):
                 try:
                     if not np.allclose(v, o[f]):
                         return False
@@ -51,10 +55,10 @@ class Data(BaseModel):
 
 
 class Particles(Data):
-    coords: np.ndarray | da.Array
+    coords: Array
     rot: Rotation
-    features: pd.DataFrame | None = None
+    features: Optional[pd.DataFrame] = None
 
 
 class Image(Data):
-    data: np.ndarray | da.Array
+    data: Array

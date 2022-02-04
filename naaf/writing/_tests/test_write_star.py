@@ -1,13 +1,17 @@
 import numpy as np
+import pandas as pd
+from scipy.spatial.transform import Rotation
 
-from blik.io_.writing.star import write_star
-from blik.datablocks import ParticleBlock
+from naaf.writing.star import write_star
+from naaf.data import Particles
 
 
 def test_write_star(tmp_path):
     file_path = tmp_path / 'test.star'
-    particleblock = ParticleBlock(positions_data=np.ones((2, 3)),
-                                  orientations_data=np.ones((2, 3, 3)),
-                                  properties_data={'a': np.ones((2,))})
+    particle = Particles(
+        coords=np.ones((2, 3)),
+        rot=Rotation.identity(2),
+        features=pd.DataFrame({'a': [1, 1]})
+    )
 
-    write_star(particleblock, file_path)
+    write_star(particle, file_path)
