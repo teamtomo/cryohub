@@ -38,6 +38,8 @@ def extract_data(
         pixel_size = df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode])
         if pixel_size is not None:
             pixel_size = np.asarray(pixel_size, dtype=float)
+            # XXX TODO: remove the following and support variable pixel sizes?
+            pixel_size = pixel_size.ravel()[0]
 
         # only relion 3.1 has shifts in angstroms
         if mode == '3.1':
