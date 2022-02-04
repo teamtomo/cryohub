@@ -47,11 +47,7 @@ def cli(paths, name_regex, strict, lazy):
      )
 
     # set up ipython shell nicely
-    banner = '''=== naaf ===
-initialised variables:
-    - dataset
-    - viewer
-    '''
+    banner = '=== naaf ==='
     sh = InteractiveShellEmbed(banner2=banner)
     sh.push('data')
     sh()
