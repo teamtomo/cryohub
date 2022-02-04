@@ -3,9 +3,7 @@ import pandas as pd
 import mrcfile
 import starfile
 
-from blik.io_.reading.main import read
-from blik.dataset import DataSet
-from blik.datablocks import PointBlock
+from naaf.reading.main import read
 
 
 def test_read_path(tmp_path):
@@ -31,22 +29,7 @@ def test_read_path(tmp_path):
     star_path = tmp_path / 'test.star'
     starfile.new(df, star_path)
 
-    dataset = read(tmp_path / '*', name_regex=r'test\d')
+    data = read(tmp_path / '*', name_regex=r'test\d')
 
-    assert len(dataset) == 4
-    assert len(dataset.volumes) == 2
-
-
-def test_read_dataset():
-    dataset = read(DataSet())
-    assert isinstance(dataset, DataSet)
-    assert len(dataset) == 0
-
-
-def test_read_datablock():
-    dataset = read(PointBlock(data=()))
-    assert isinstance(dataset, DataSet)
-    assert len(dataset) == 1
-    dataset = read([PointBlock(data=()), PointBlock(data=())])
-    assert isinstance(dataset, DataSet)
-    assert len(dataset) == 2
+    assert len(data) == 4
+    # assert len(data) == 2

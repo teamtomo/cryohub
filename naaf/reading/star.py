@@ -7,32 +7,6 @@ from ..utils.generic import guess_name, ParseError
 from ..utils.euler import RELION_EULER, RELION_PSI
 
 
-COORD_HEADERS = [f'rlnCoordinate{axis}' for axis in 'XYZ']
-EULER_HEADERS = {
-    3: [f'rlnAngle{angle}' for angle in ('Rot', 'Tilt', 'Psi')],
-    2: ['rlnAnglePsi']
-}
-SHIFT_HEADERS = {
-    '3.0': [f'rlnOrigin{axis}' for axis in 'XYZ'],
-    '3.1': [f'rlnOrigin{axis}Angst' for axis in 'XYZ']
-}
-
-PIXEL_SIZE_HEADERS = {
-    '3.0': ['rlnDetectorPixelSize'],
-    '3.1': ['rlnImagePixelSize']
-}
-MICROGRAPH_NAME_HEADER = 'rlnMicrographName'
-
-ALL_HEADERS = (
-    COORD_HEADERS +
-    EULER_HEADERS[3] +
-    SHIFT_HEADERS['3.0'] +
-    SHIFT_HEADERS['3.1'] +
-    PIXEL_SIZE_HEADERS['3.0'] +
-    PIXEL_SIZE_HEADERS['3.1']
-)
-
-
 def extract_data(
     df,
     mode='3.1',
@@ -42,13 +16,13 @@ def extract_data(
     """
     extract particle data from a starfile dataframe
     """
-    if COORD_HEADERS[-1] in df.columns:
+    if Relion.COORD_HEADERS[-1] in df.columns:
         dim = 3
     else:
         dim = 2
 
-    if MICROGRAPH_NAME_HEADER in df.columns:
-        groups = df.groupby(MICROGRAPH_NAME_HEADER)
+    if Relion.MICROGRAPH_NAME_HEADER in df.columns:
+        groups = df.groupby(Relion.MICROGRAPH_NAME_HEADER)
     else:
         groups = [(star_path, df)]
 
@@ -56,26 +30,26 @@ def extract_data(
     for micrograph_name, df_volume in groups:
         name = guess_name(micrograph_name, name_regex)
 
-        coords = df_volume[COORD_HEADERS[:dim]].to_numpy(dtype=float)
+        coords = df_volume[Relion.COORD_HEADERS[:dim]].to_numpy(dtype=float)
 
-        pixel_size = np.asarray(df_volume.get(PIXEL_SIZE_HEADERS[mode], 1.0))
+        pixel_size = np.asarray(df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode], 1.0))
 
-        if (shifts := df_volume.get(SHIFT_HEADERS[mode][:dim])) is not None:
+        if (shifts := df_volume.get(Relion.SHIFT_HEADERS[mode][:dim])) is not None:
             # only relion 3.1 has shifts in angstroms
             if mode == '3.1':
                 shifts = shifts / pixel_size
             coords -= shifts
 
-        eulers = np.asarray(df_volume.get(EULER_HEADERS[dim], 0))
+        eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS[dim], 0))
         if dim == 3:
-            rot = Rotation.from_euler(RELION_EULER, eulers)
+            rot = Rotation.from_euler(Relion.EULER, eulers)
         else:
-            rot = Rotation.from_euler(RELION_PSI, eulers)
+            rot = Rotation.from_euler(Relion.INPLANE, eulers)
 
         features = pd.DataFrame({
             key: df_volume[key].to_numpy()
             for key in df.columns
-            if key not in ALL_HEADERS
+            if key not in Relion.ALL_HEADERS
         })
 
         # TODO: better way to handle pizel size? Now we can only account for uniform size

@@ -3,17 +3,7 @@ from scipy.spatial.transform import Rotation
 import dynamotable
 
 from ..utils.generic import guess_name
-from ..utils.euler import DYNAMO_EULER, DYNAMO_TILT
-
-
-COORD_HEADERS = ['x', 'y', 'z']
-SHIFT_HEADERS = ['dx', 'dy', 'dz']
-EULER_HEADERS = {
-    3: ['tdrot', 'tilt', 'narot'],
-    2: ['tilt']  # TODO: 2d column name might be wrong!
-}
-
-ALL_HEADERS = COORD_HEADERS + SHIFT_HEADERS + EULER_HEADERS[3]
+from ..utils.constants import Dynamo
 
 
 def name_from_volume(volume_identifier, name_regex=None):
@@ -41,7 +31,7 @@ def read_tbl(
     if 'tomo_file' in df.columns:
         split_on = 'tomo_file'
 
-    if COORD_HEADERS[-1] in df.columns:
+    if Dynamo.COORD_HEADERS[-1] in df.columns:
         dim = 3
     else:
         dim = 2
@@ -49,20 +39,20 @@ def read_tbl(
     volumes = []
     for volume, df_volume in df.groupby(split_on):
         name = name_from_volume(volume, name_regex)
-        coords = np.asarray(df_volume[COORD_HEADERS[:dim]])
-        if (shifts := df_volume.get(SHIFT_HEADERS[:dim])) is not None:
+        coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]])
+        if (shifts := df_volume.get(Dynamo.SHIFT_HEADERS[:dim])) is not None:
             coords += shifts
 
-        eulers = np.asarray(df_volume.get(EULER_HEADERS[dim]))
+        eulers = np.asarray(df_volume.get(Dynamo.EULER_HEADERS[dim]))
         if dim == 3:
-            rot = Rotation.from_euler(DYNAMO_EULER, eulers)
+            rot = Rotation.from_euler(Dynamo.EULER, eulers)
         else:
-            rot = Rotation.from_euler(DYNAMO_TILT, eulers)
+            rot = Rotation.from_euler(Dynamo.INPLANE, eulers)
 
         features = {
             key: df_volume[key].to_numpy()
             for key in df.columns
-            if key not in ALL_HEADERS
+            if key not in Dynamo.ALL_HEADERS
         }
 
         if pixel_size is None:

@@ -1,4 +1,6 @@
 import re
+from typing import Iterable
+from pathlib import Path
 
 
 class ParseError(RuntimeError):
@@ -27,3 +29,17 @@ def guess_name(string, name_regex=None):
             return match.group(0)
     else:
         return None
+
+
+def listify(obj):
+    """
+    transform input into an appropriate list, unless already list-like
+    """
+    if isinstance(obj, Iterable):
+        if isinstance(obj, (str, Path)):
+            return [obj]
+        else:
+            return list(obj)
+    if obj is None:
+        return []
+    return [obj]
