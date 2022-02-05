@@ -16,7 +16,7 @@ def cli(paths, name_regex, strict, lazy):
 
     Opens files and lands in an interactive ipython shell with data loaded as `data`
 
-    PATHS: any number of files or globs [default='./*']
+    PATHS: any number of files [default='.']
 
     EXAMPLES:
 

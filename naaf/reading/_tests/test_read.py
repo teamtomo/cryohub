@@ -29,7 +29,7 @@ def test_read_path(tmp_path):
     star_path = tmp_path / 'test.star'
     starfile.write(df, star_path)
 
-    data = read(tmp_path / '*', name_regex=r'test\d')
+    data = read(tmp_path, name_regex=r'test\d')
 
     assert len(data) == 4
 

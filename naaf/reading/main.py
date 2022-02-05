@@ -44,45 +44,24 @@ def read_file(file_path, **kwargs):
     raise ParseError(f'could not read {file_path}')
 
 
-def root_relative_glob(glob):
-    return str(Path(glob).expanduser().resolve().relative_to('/'))
-
-
-def expand_globs(globs):
-    """
-    expand globs to single files
-    """
-    globs = listify(globs)
-    for glob in globs:
-        glob = root_relative_glob(glob)
-        yield from Path('/').glob(glob)
-
-
 def filter_readable(paths):
     for path in paths:
+        path = Path(path)
+        if path.is_dir():
+            yield from filter_readable(path.iterdir())
         if path.is_file() and path.suffix in known_formats:
             yield path
 
 
-def find_files(globs):
-    """
-    take a glob pattern or iterable thereof and find all readable files that match it
-    """
-    files = expand_globs(globs)
-    readable = filter_readable(files)
-
-    yield from readable
-
-
 def read(
-     *globs,
+     *paths,
      name_regex=None,
      strict=False,
      lazy=True,
      **kwargs,
 ):
     r"""
-    Read any number of paths or glob patterns.
+    Read any number of paths.
 
     name_regex: a regex used to infer names from paths or micrograph names. For example:
                 'Protein_\d+' will match 'MyProtein_10.star' and 'MyProtein_001.mrc'
@@ -91,13 +70,13 @@ def read(
     lazy:       read data lazily (if possible)
     """
     data = []
-    for file in find_files(globs):
+    for file in filter_readable(paths):
         try:
             data.extend(read_file(file, name_regex=name_regex, lazy=lazy, **kwargs))
         except ParseError:
             if strict:
                 raise
     if not data and strict:
-        raise ParseError(f'could not read any data from {globs}')
+        raise ParseError(f'could not read any data from {paths}')
 
     return data
