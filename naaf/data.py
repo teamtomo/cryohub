@@ -8,9 +8,6 @@ import dask.array as da
 from scipy.spatial.transform import Rotation
 
 
-Array = Union[np.ndarray, da.Array]
-
-
 class Data(BaseModel):
     class Config:
         arbitrary_types_allowed = True
@@ -27,7 +24,7 @@ class Data(BaseModel):
         for f, v in s.items():
             if f not in o:
                 return False
-            elif isinstance(v, Array):
+            elif isinstance(v, (np.ndarray, da.Array)):
                 try:
                     if not np.allclose(v, o[f]):
                         return False
@@ -55,10 +52,10 @@ class Data(BaseModel):
 
 
 class Particles(Data):
-    coords: Array
+    coords: Union[np.ndarray, da.Array]
     rot: Rotation
     features: Optional[pd.DataFrame] = None
 
 
 class Image(Data):
-    data: Array
+    data: Union[np.ndarray, da.Array]
