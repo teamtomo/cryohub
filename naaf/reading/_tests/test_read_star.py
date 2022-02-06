@@ -31,7 +31,7 @@ def test_read_relion30_3d(tmp_path):
     expected = Particles(
         name='a',
         coords=np.array([[0.9, 1.8, 2.7]]),
-        rot=Rotation.from_euler(Relion.EULER, [[0, 0, 90]]),
+        rot=Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True),
         features=pd.DataFrame({'feature': ['x']})
     )
     assert expected == part
@@ -68,7 +68,7 @@ def test_read_relion31_3d(tmp_path):
         name='a',
         pixel_size=10,
         coords=np.array([[0.99, 1.98, 2.97]]),
-        rot=Rotation.from_euler(Relion.EULER, [[0, 0, 90]]),
+        rot=Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True),
         features=pd.DataFrame({'feature': ['x']})
     )
     assert expected == part

@@ -51,9 +51,9 @@ def extract_data(
 
         eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS[dim], 0), dtype=float)
         if dim == 3:
-            rot = Rotation.from_euler(Relion.EULER, eulers)
+            rot = Rotation.from_euler(Relion.EULER, eulers, degrees=True)
         else:
-            rot = Rotation.from_euler(Relion.INPLANE, eulers)
+            rot = Rotation.from_euler(Relion.INPLANE, eulers, degrees=True)
 
         features = pd.DataFrame({
             key: df_volume[key].to_numpy()

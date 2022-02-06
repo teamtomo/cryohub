@@ -30,7 +30,7 @@ def test_read_tbl(tmp_path):
     expected = Particles(
         name='0',
         coords=np.array([[0.9, 1.8, 2.7]]),
-        rot=Rotation.from_euler(Dynamo.EULER, [[0, 0, 90]]),
+        rot=Rotation.from_euler(Dynamo.EULER, [[0, 0, 90]], degrees=True),
     )
 
     assert expected == part

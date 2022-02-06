@@ -46,9 +46,9 @@ def read_tbl(
 
         eulers = np.asarray(df_volume.get(Dynamo.EULER_HEADERS[dim], 0), dtype=float)
         if dim == 3:
-            rot = Rotation.from_euler(Dynamo.EULER, eulers)
+            rot = Rotation.from_euler(Dynamo.EULER, eulers, degrees=True)
         else:
-            rot = Rotation.from_euler(Dynamo.INPLANE, eulers)
+            rot = Rotation.from_euler(Dynamo.INPLANE, eulers, degrees=True)
 
         data.append(
             Particles(
