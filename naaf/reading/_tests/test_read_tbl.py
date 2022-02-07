@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation
 from naaf.reading.tbl import read_tbl
 from naaf.data import Particles
 from naaf.utils.constants import Naaf, Dynamo
+from naaf.utils.testing import assert_data_equal
 
 
 def test_read_tbl(tmp_path):
@@ -36,4 +37,4 @@ def test_read_tbl(tmp_path):
         name='0',
     )
 
-    assert expected == part
+    assert_data_equal(part, expected)

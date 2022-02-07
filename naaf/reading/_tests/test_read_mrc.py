@@ -3,6 +3,7 @@ import mrcfile
 
 from naaf.reading.mrc import read_mrc
 from naaf.data import Image
+from naaf.utils.testing import assert_data_equal
 
 
 def test_read_mrc(tmp_path):
@@ -16,4 +17,4 @@ def test_read_mrc(tmp_path):
         name='test',
     )
 
-    assert image == expected
+    assert_data_equal(image, expected)

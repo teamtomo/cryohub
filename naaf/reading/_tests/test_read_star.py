@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation
 from naaf.reading.star import read_star
 from naaf.data import Particles
 from naaf.utils.constants import Naaf, Relion
+from naaf.utils.testing import assert_data_equal
 
 
 def test_read_relion30_3d(tmp_path):
@@ -37,7 +38,7 @@ def test_read_relion30_3d(tmp_path):
         data=expected_data,
         name='a',
     )
-    assert expected == part
+    assert_data_equal(part, expected)
 
 
 
@@ -77,4 +78,4 @@ def test_read_relion31_3d(tmp_path):
         pixel_size=10,
         name='a',
     )
-    assert expected == part
+    assert_data_equal(part, expected)

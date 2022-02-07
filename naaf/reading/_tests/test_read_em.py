@@ -3,6 +3,7 @@ import emfile
 
 from naaf.reading.em import read_em
 from naaf.data import Image
+from naaf.utils.testing import assert_data_equal
 
 
 def test_read_em(tmp_path):
@@ -16,4 +17,4 @@ def test_read_em(tmp_path):
         name='test',
     )
 
-    assert image == expected
+    assert_data_equal(image, expected)
