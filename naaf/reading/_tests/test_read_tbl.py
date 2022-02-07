@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation
 
 from naaf.reading.tbl import read_tbl
 from naaf.data import Particles
-from naaf.utils.constants import Dynamo
+from naaf.utils.constants import Naaf, Dynamo
 
 
 def test_read_tbl(tmp_path):
@@ -27,10 +27,13 @@ def test_read_tbl(tmp_path):
     particles = read_tbl(file_path, name_regex=r'\w')
     part = particles[0]
 
+    expected_data = pd.DataFrame()
+    expected_data[Naaf.COORD_HEADERS] = np.array([[0.9, 1.8, 2.7]])
+    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Dynamo.EULER, [[0, 0, 90]], degrees=True)
+
     expected = Particles(
+        data=expected_data,
         name='0',
-        coords=np.array([[0.9, 1.8, 2.7]]),
-        rot=Rotation.from_euler(Dynamo.EULER, [[0, 0, 90]], degrees=True),
     )
 
     assert expected == part

@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation
 
 from naaf.reading.star import read_star
 from naaf.data import Particles
-from naaf.utils.constants import Relion
+from naaf.utils.constants import Naaf, Relion
 
 
 def test_read_relion30_3d(tmp_path):
@@ -28,11 +28,14 @@ def test_read_relion30_3d(tmp_path):
     particles = read_star(file_path, name_regex=r'\w')
     part = particles[0]
 
+    expected_data = pd.DataFrame()
+    expected_data[Naaf.COORD_HEADERS] = np.array([[0.9, 1.8, 2.7]])
+    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True)
+    expected_data['feature'] = 'x'
+
     expected = Particles(
+        data=expected_data,
         name='a',
-        coords=np.array([[0.9, 1.8, 2.7]]),
-        rot=Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True),
-        features=pd.DataFrame({'feature': ['x']})
     )
     assert expected == part
 
@@ -64,11 +67,14 @@ def test_read_relion31_3d(tmp_path):
     particles = read_star(file_path, name_regex=r'\w')
     part = particles[0]
 
+    expected_data = pd.DataFrame()
+    expected_data[Naaf.COORD_HEADERS] = np.array([[0.99, 1.98, 2.97]])
+    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True)
+    expected_data['feature'] = 'x'
+
     expected = Particles(
-        name='a',
+        data=expected_data,
         pixel_size=10,
-        coords=np.array([[0.99, 1.98, 2.97]]),
-        rot=Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True),
-        features=pd.DataFrame({'feature': ['x']})
+        name='a',
     )
     assert expected == part

@@ -4,7 +4,7 @@ from scipy.spatial.transform import Rotation
 import starfile
 
 from ..utils.generic import guess_name, ParseError
-from ..utils.constants import Relion
+from ..utils.constants import Naaf, Relion
 from ..data import Particles
 
 
@@ -28,7 +28,7 @@ def extract_data(
     else:
         groups = [(star_path, df)]
 
-    data = []
+    particles = []
     for micrograph_name, df_volume in groups:
         name = guess_name(micrograph_name, name_regex)
 
@@ -55,23 +55,22 @@ def extract_data(
         else:
             rot = Rotation.from_euler(Relion.INPLANE, eulers, degrees=True)
 
-        features = pd.DataFrame({
-            key: df_volume[key].to_numpy()
-            for key in df.columns
-            if key not in Relion.ALL_HEADERS
-        })
+        features = df_volume.drop(columns=Relion.ALL_HEADERS, errors='ignore')
 
-        data.append(
+        data = pd.DataFrame()
+        data[Naaf.COORD_HEADERS] = coords
+        data[Naaf.ROT_HEADER] = np.asarray(rot)
+        data = pd.concat([data, features], axis=1)
+
+        particles.append(
             Particles(
-                coords=coords,
-                rot=rot,
-                features=features,
+                data=data,
                 pixel_size=pixel_size,
                 name=name,
             )
         )
 
-    return data
+    return particles
 
 
 def parse_relion30(raw_data, **kwargs):

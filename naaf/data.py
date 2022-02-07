@@ -35,16 +35,20 @@ class Data(BaseModel):
                 for col in v:
                     if col not in v:
                         return False
-                    try:
-                        if not np.allclose(v[col], o[f][col]):
+                    if isinstance(v[col][0], Rotation):
+                        s_rot = Rotation.concatenate(v[col])
+                        o_rot = Rotation.concatenate(o[f][col])
+                        # invert and multiply should give zero
+                        back_forth = (s_rot * o_rot.inv()).reduce().as_rotvec()
+                        if not np.allclose(back_forth, 0):
                             return False
-                    except TypeError:
-                        if not np.all(v[col] == o[f][col]):
-                            return False
-            elif isinstance(v, Rotation):
-                back_forth = (v.inv() * o[f]).reduce().as_rotvec()
-                if not np.allclose(back_forth, 0):
-                    return False
+                    else:
+                        try:
+                            if not np.allclose(v[col], o[f][col]):
+                                return False
+                        except TypeError:
+                            if not np.all(v[col] == o[f][col]):
+                                return False
             else:
                 if not v == o[f]:
                     return False
@@ -52,9 +56,7 @@ class Data(BaseModel):
 
 
 class Particles(Data):
-    coords: Union[np.ndarray, da.Array]
-    rot: Rotation
-    features: Optional[pd.DataFrame] = None
+    data: pd.DataFrame
 
 
 class Image(Data):

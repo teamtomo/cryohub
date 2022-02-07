@@ -1,6 +1,11 @@
 # euler angle definitions are as expected by scipy Rotation objects
 # uppercase is intrinsic, lowercase extrinsic
 
+class Naaf:
+    COORD_HEADERS = ['x', 'y', 'z']
+    ROT_HEADER = 'rot'
+    ALL_HEADER = COORD_HEADERS + [ROT_HEADER]
+
 class Relion:
     COORD_HEADERS = [f'rlnCoordinate{axis}' for axis in 'XYZ']
     EULER_HEADERS = {

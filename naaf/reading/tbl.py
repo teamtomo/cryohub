@@ -1,9 +1,10 @@
 import numpy as np
+import pandas as pd
 from scipy.spatial.transform import Rotation
 import dynamotable
 
 from ..utils.generic import guess_name
-from ..utils.constants import Dynamo
+from ..utils.constants import Naaf, Dynamo
 from ..data import Particles
 
 
@@ -36,7 +37,7 @@ def read_tbl(
     else:
         dim = 2
 
-    data = []
+    particles = []
     for volume, df_volume in df.groupby(split_on):
         name = name_from_volume(volume, name_regex)
         coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]], dtype=float)
@@ -50,12 +51,15 @@ def read_tbl(
         else:
             rot = Rotation.from_euler(Dynamo.INPLANE, eulers, degrees=True)
 
-        data.append(
+        data = pd.DataFrame()
+        data[Naaf.COORD_HEADERS] = coords
+        data[Naaf.ROT_HEADER] = np.asarray(rot)
+
+        particles.append(
             Particles(
-                coords=coords,
-                rot=rot,
+                data=data,
                 name=name,
             )
         )
 
-    return data
+    return particles
