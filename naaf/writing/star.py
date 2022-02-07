@@ -12,7 +12,8 @@ def write_star(particles, file_path, features=None, overwrite=False):
     df = pd.DataFrame()
     df[Relion.COORD_HEADERS] = particles.data[Naaf.COORD_HEADERS]
     rot = Rotation.concatenate(particles.data[Naaf.ROT_HEADER])
-    df[Relion.EULER_HEADERS[3]] = rot.as_euler(Relion.EULER, degrees=True)
+    # we use the inverse rotation in naaf
+    df[Relion.EULER_HEADERS[3]] = rot.inv().as_euler(Relion.EULER, degrees=True)
 
     features = particles.data.drop(columns=Relion.ALL_HEADERS, errors='ignore')
     df = pd.concat([df, features], axis=1)

@@ -25,14 +25,14 @@ def assert_data_equal(data1, data2):
                     # invert and multiply should give zero
                     back_forth = (s_rot * o_rot.inv()).reduce().as_rotvec()
                     if not np.allclose(back_forth, 0):
-                        raise AssertionError(f'Rotation columns of field "{field}" are not equivalent')
+                        raise AssertionError(f'Rotation columns "{col}" of field "{field}" are not equivalent')
                 else:
                     try:
                         if not np.allclose(d1[field][col], d2[field][col]):
-                            raise AssertionError(f'numeric array columns of field "{field}" are not within error')
+                            raise AssertionError(f'numeric array columns "{col}" of field "{field}" are not within error')
                     except TypeError:
                         if not np.all(d1[field][col] == d2[field][col]):
-                            raise AssertionError(f'array columns of field "{field}" are not equal')
+                            raise AssertionError(f'array columns "{col}" of field "{field}" are not equal')
         else:
             if not d1[field] == d2[field]:
                 return False

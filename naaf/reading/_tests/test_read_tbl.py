@@ -29,8 +29,8 @@ def test_read_tbl(tmp_path):
     part = particles[0]
 
     expected_data = pd.DataFrame()
-    expected_data[Naaf.COORD_HEADERS] = np.array([[0.9, 1.8, 2.7]])
-    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Dynamo.EULER, [[0, 0, 90]], degrees=True)
+    expected_data[Naaf.COORD_HEADERS] = np.array([[1.1, 2.2, 3.3]])
+    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Dynamo.EULER, [[0, 0, 90]], degrees=True).inv()
 
     expected = Particles(
         data=expected_data,

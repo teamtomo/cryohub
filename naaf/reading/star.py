@@ -55,6 +55,9 @@ def extract_data(
         else:
             rot = Rotation.from_euler(Relion.INPLANE, eulers, degrees=True)
 
+        # we want the inverse, which when applied to basis vectors it gives us the particle orientation
+        rot = rot.inv()
+
         features = df_volume.drop(columns=Relion.ALL_HEADERS, errors='ignore')
 
         data = pd.DataFrame()

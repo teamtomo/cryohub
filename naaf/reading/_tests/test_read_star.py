@@ -31,7 +31,7 @@ def test_read_relion30_3d(tmp_path):
 
     expected_data = pd.DataFrame()
     expected_data[Naaf.COORD_HEADERS] = np.array([[0.9, 1.8, 2.7]])
-    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True)
+    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True).inv()
     expected_data['feature'] = 'x'
 
     expected = Particles(
@@ -70,7 +70,7 @@ def test_read_relion31_3d(tmp_path):
 
     expected_data = pd.DataFrame()
     expected_data[Naaf.COORD_HEADERS] = np.array([[0.99, 1.98, 2.97]])
-    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True)
+    expected_data[Naaf.ROT_HEADER] = Rotation.from_euler(Relion.EULER, [[0, 0, 90]], degrees=True).inv()
     expected_data['feature'] = 'x'
 
     expected = Particles(
