@@ -42,8 +42,7 @@ def read_tbl(
         name = name_from_volume(volume, name_regex)
         coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]], dtype=float)
         shifts = np.asarray(df_volume.get(Dynamo.SHIFT_HEADERS[:dim], 0), dtype=float)
-        # XXX TODO: Check if like the was with Relion there's an issue with + or - shifts!
-        coords -= shifts
+        coords += shifts
 
         eulers = np.asarray(df_volume.get(Dynamo.EULER_HEADERS[dim], 0), dtype=float)
         if dim == 3:
