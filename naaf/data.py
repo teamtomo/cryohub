@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Optional, Union
 
-from pydantic import BaseModel
+import dask.array as da
 import numpy as np
 import pandas as pd
-import dask.array as da
+from pydantic import BaseModel, validator
 
 
 class Data(BaseModel):
@@ -14,6 +14,13 @@ class Data(BaseModel):
     name: Optional[str] = None
     source: Optional[Path] = None
     pixel_size: Optional[float] = None
+
+    @validator("pixel_size")
+    def _validate_pixel_size(cls, v):
+        if v is not None:
+            # TODO: for now just make everything 3D
+            return np.broadcast_to(v, (3,))
+
 
 class Particles(Data):
     data: pd.DataFrame
