@@ -1,36 +1,30 @@
+import dynamotable
 import numpy as np
 import pandas as pd
 from scipy.spatial.transform import Rotation
-import dynamotable
 
-from ..utils.generic import guess_name
-from ..utils.constants import Naaf, Dynamo
 from ..data import Particles
+from ..utils.constants import Dynamo, Naaf
+from ..utils.generic import guess_name
 
 
 def name_from_volume(volume_identifier, name_regex=None):
-    """Generate ParticleBlock name from volume identifier from dataframe
-    """
+    """Generate ParticleBlock name from volume identifier from dataframe"""
     if isinstance(volume_identifier, int):
         return str(volume_identifier)
     elif isinstance(volume_identifier, str):
         return guess_name(volume_identifier, name_regex)
 
 
-def read_tbl(
-    table_path,
-    table_map_file=None,
-    name_regex=None,
-    **kwargs
-):
+def read_tbl(table_path, table_map_file=None, name_regex=None, **kwargs):
     """
     Read particles from a dynamo format table file
     """
     df = dynamotable.read(table_path, table_map_file)
 
-    split_on = 'tomo'
-    if 'tomo_file' in df.columns:
-        split_on = 'tomo_file'
+    split_on = "tomo"
+    if "tomo_file" in df.columns:
+        split_on = "tomo_file"
 
     if Dynamo.COORD_HEADERS[-1] in df.columns:
         dim = 3
@@ -39,6 +33,9 @@ def read_tbl(
 
     particles = []
     for volume, df_volume in df.groupby(split_on):
+        # drop global index to prevent issues with concatenation and similar
+        df_volume = df_volume.reset_index(drop=True)
+
         name = name_from_volume(volume, name_regex)
         coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]], dtype=float)
         shifts = np.asarray(df_volume.get(Dynamo.SHIFT_HEADERS[:dim], 0), dtype=float)
