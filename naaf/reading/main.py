@@ -1,25 +1,24 @@
 from pathlib import Path
 
-from .star import read_star
-from .mrc import read_mrc
-from .em import read_em
-from .tbl import read_tbl
+from ..utils.generic import ParseError, listify
 from .box import read_box
 from .cbox import read_cbox
-
-from ..utils.generic import listify, ParseError
+from .em import read_em
+from .mrc import read_mrc
+from .star import read_star
+from .tbl import read_tbl
 
 # a mapping of file extensions to readers, tuple map to tuples (don't forget trailing comma!):
 #   - multiple extensions values in the keys use the same readers
 #   - multiple readers are called in order from highest to lowers in case previous ones fail
 # TODO: put this directly in the readers to make it plug and play?
 readers = {
-    ('.star',): (read_star,),
-    ('.mrc', '.mrcs', '.map'): (read_mrc,),
-    ('.em',): (read_em,),
-    ('.tbl',): (read_tbl,),
-    ('.box',): (read_box,),
-    ('.cbox',): (read_cbox,),
+    (".star",): (read_star,),
+    (".mrc", ".mrcs", ".st", ".map"): (read_mrc,),
+    (".em",): (read_em,),
+    (".tbl",): (read_tbl,),
+    (".box",): (read_box,),
+    (".cbox",): (read_cbox,),
 }
 
 known_formats = [ext for formats in readers for ext in formats]
@@ -41,7 +40,7 @@ def read_file(file_path, **kwargs):
                     # this will be raised by individual readers when the file can't be read.
                     # Keep trying until all options are exhausted
                     continue
-    raise ParseError(f'could not read {file_path}')
+    raise ParseError(f"could not read {file_path}")
 
 
 def filter_readable(paths):
@@ -54,11 +53,11 @@ def filter_readable(paths):
 
 
 def read(
-     *paths,
-     name_regex=None,
-     strict=False,
-     lazy=True,
-     **kwargs,
+    *paths,
+    name_regex=None,
+    strict=False,
+    lazy=True,
+    **kwargs,
 ):
     r"""
     Read any number of paths.
@@ -77,6 +76,6 @@ def read(
             if strict:
                 raise
     if not data and strict:
-        raise ParseError(f'could not read any data from {paths}')
+        raise ParseError(f"could not read any data from {paths}")
 
     return data
