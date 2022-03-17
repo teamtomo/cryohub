@@ -28,3 +28,4 @@ class Particles(Data):
 
 class Image(Data):
     data: Union[np.ndarray, da.Array]
+    stack: bool

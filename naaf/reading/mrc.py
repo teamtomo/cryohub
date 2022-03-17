@@ -1,18 +1,13 @@
-import mrcfile
 import dask.array as da
+import mrcfile
 import numpy as np
 from numpy.lib.recfunctions import structured_to_unstructured
 
-from ..utils.generic import guess_name
 from ..data import Image
+from ..utils.generic import guess_name
 
 
-def read_mrc(
-    image_path,
-    name_regex=None,
-    lazy=True,
-    **kwargs
-):
+def read_mrc(image_path, name_regex=None, lazy=True, **kwargs):
     """
     read an mrc file
     """
@@ -27,8 +22,11 @@ def read_mrc(
         # TODO: support anisotropic pixel sizes
         pixel_size = structured_to_unstructured(mrc.voxel_size)[0] or None
 
+        stack = mrc.is_image_stack() or mrc.is_volume_stack()
+
     return Image(
         data=data,
         name=name,
-        pixel_size=pixel_size
+        pixel_size=pixel_size,
+        stack=stack,
     )
