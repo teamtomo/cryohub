@@ -21,7 +21,7 @@ naaf path/to/files/ /other/path/to/file.star
 # Features
 
 Currently `naaf` is capable of reading images in the following formats:
-- `.mrc`
+- `.mrc` (and the `.mrcs` or `.st` variants)
 - Dynamo `.em`
 
 and particle data in the following formats:
