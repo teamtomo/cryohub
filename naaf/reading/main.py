@@ -55,6 +55,7 @@ def filter_readable(paths):
 def read(
     *paths,
     name_regex=None,
+    names=None,
     strict=False,
     lazy=True,
     **kwargs,
@@ -65,6 +66,7 @@ def read(
     name_regex: a regex used to infer names from paths or micrograph names. For example:
                 'Protein_\d+' will match 'MyProtein_10.star' and 'MyProtein_001.mrc'
                 and name the respective DataBlocks 'Protein_10' and 'Protein_01'
+    names:      a list of strings: anything whose name is not in this list will be discarded.
     strict:     if set to true, immediately fail if a matched filename cannot be read
     lazy:       read data lazily (if possible)
     """
@@ -78,4 +80,6 @@ def read(
     if not data and strict:
         raise ParseError(f"could not read any data from {paths}")
 
+    if names is not None:
+        data = [d for d in data if d.name in names]
     return data
