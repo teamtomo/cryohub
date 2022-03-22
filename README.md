@@ -41,6 +41,7 @@ Data.pixel_size  # pixel size information extracted from the data. None if absen
 Particles.data  # pandas DataFrame with coordinates, rotations and arbitary particle features
 
 Image.data  # data array with pixel intensities
+Image.stack  # whether the image is a stack of (N-1)D images
 ```
 
 ## Particle orientations
