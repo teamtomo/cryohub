@@ -54,6 +54,10 @@ def extract_data(
 
         coords -= shifts
 
+        # always work with 3D, add z=0
+        if dim == 2:
+            coords = np.pad(coords, ((0, 0), (0, 1)))
+
         eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS[dim], 0), dtype=float)
         if dim == 3:
             rot = Rotation.from_euler(Relion.EULER, eulers, degrees=True)

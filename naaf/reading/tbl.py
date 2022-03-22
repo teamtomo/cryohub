@@ -40,6 +40,9 @@ def read_tbl(table_path, table_map_file=None, name_regex=None, **kwargs):
         coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]], dtype=float)
         shifts = np.asarray(df_volume.get(Dynamo.SHIFT_HEADERS[:dim], 0), dtype=float)
         coords += shifts
+        # always work with 3D, add z=0
+        if dim == 2:
+            coords = np.pad(coords, ((0, 0), (0, 1)))
 
         eulers = np.asarray(df_volume.get(Dynamo.EULER_HEADERS[dim], 0), dtype=float)
         if dim == 3:
