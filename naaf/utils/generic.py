@@ -1,6 +1,6 @@
 import re
-from typing import Iterable
 from pathlib import Path
+from typing import Iterable
 
 from ..data import Data
 
@@ -11,10 +11,10 @@ class ParseError(RuntimeError):
 
 # a list of commonly used base names for paths in regex form
 common_name_regexes = (
-    r'TS_\d+',
-    r'series_\d+',
-    r'_\d+',
-    r'\d+',
+    r"TS_\d+",
+    r"series_\d+",
+    r"_\d+",
+    r"\d+",
 )
 
 
@@ -25,9 +25,9 @@ def guess_name(string, name_regex=None):
     """
     if isinstance(string, Path):
         string = string.stem
+    name_regex = listify(name_regex)
     regexes = list(common_name_regexes)
-    if name_regex is not None:
-        regexes.insert(0, name_regex)
+    regexes = name_regex + regexes
     for regex in regexes:
         if match := re.search(regex, str(string)):
             return match.group(0)
