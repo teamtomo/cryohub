@@ -19,9 +19,18 @@ def extract_data(
     extract particle data from a starfile dataframe
     """
     if Relion.COORD_HEADERS[-1] in df.columns:
-        dim = 3
+        coord_headers = Relion.COORD_HEADERS
+        shift_headers = Relion.SHIFT_HEADERS[mode]
     else:
-        dim = 2
+        coord_headers = Relion.COORD_HEADERS[:2]
+        shift_headers = Relion.SHIFT_HEADERS[mode][:2]
+
+    if Relion.EULER_HEADERS[0] in df.columns:
+        euler_headers = Relion.EULER_HEADERS
+        euler_convention = Relion.EULER
+    else:
+        euler_headers = Relion.EULER_HEADERS[-1:]
+        euler_convention = Relion.INPLANE
 
     if Relion.MICROGRAPH_NAME_HEADER in df.columns:
         groups = df.groupby(Relion.MICROGRAPH_NAME_HEADER)
@@ -35,9 +44,9 @@ def extract_data(
 
         name = guess_name(micrograph_name, name_regex)
 
-        coords = np.asarray(df_volume[Relion.COORD_HEADERS[:dim]], dtype=float)
+        coords = np.asarray(df_volume[coord_headers], dtype=float)
         shifts = np.asarray(
-            df_volume.get(Relion.SHIFT_HEADERS[mode][:dim], 0), dtype=float
+            df_volume.get(shift_headers, 0), dtype=float
         )
 
         pixel_size = df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode])
@@ -55,14 +64,11 @@ def extract_data(
         coords -= shifts
 
         # always work with 3D, add z=0
-        if dim == 2:
+        if coords.shape[-1] == 2:
             coords = np.pad(coords, ((0, 0), (0, 1)))
 
-        eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS[dim], 0), dtype=float)
-        if dim == 3:
-            rot = Rotation.from_euler(Relion.EULER, eulers, degrees=True)
-        else:
-            rot = Rotation.from_euler(Relion.INPLANE, eulers, degrees=True)
+        eulers = np.asarray(df_volume.get(euler_headers, 0), dtype=float)
+        rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
 
         # we want the inverse, which when applied to basis vectors it gives us the particle orientation
         rot = rot.inv()

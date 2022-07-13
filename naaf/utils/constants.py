@@ -10,10 +10,7 @@ class Naaf:
 
 class Relion:
     COORD_HEADERS = [f"rlnCoordinate{axis}" for axis in "XYZ"]
-    EULER_HEADERS = {
-        3: [f"rlnAngle{angle}" for angle in ("Rot", "Tilt", "Psi")],
-        2: ["rlnAnglePsi"],
-    }
+    EULER_HEADERS = [f"rlnAngle{angle}" for angle in ["Rot", "Tilt", "Psi"]]
     SHIFT_HEADERS = {
         "3.0": [f"rlnOrigin{axis}" for axis in "XYZ"],
         "3.1": [f"rlnOrigin{axis}Angst" for axis in "XYZ"],
@@ -23,7 +20,7 @@ class Relion:
     OPTICS_GROUP_HEADER = "rlnOpticsGroup"
     ALL_HEADERS = (
         COORD_HEADERS
-        + EULER_HEADERS[3]
+        + EULER_HEADERS
         + SHIFT_HEADERS["3.0"]
         + SHIFT_HEADERS["3.1"]
         + PIXEL_SIZE_HEADERS["3.0"]
