@@ -1,10 +1,12 @@
 import dynamotable
 import numpy as np
 import pandas as pd
+from cryopose import CryoPoseDataLabels as CPDL
+from cryopose import validate_cryopose_dataframe
 from scipy.spatial.transform import Rotation
 
 from ..data import Particles
-from ..utils.constants import Dynamo, Naaf
+from ..utils.constants import Dynamo
 from ..utils.generic import guess_name
 
 
@@ -54,12 +56,12 @@ def read_tbl(table_path, table_map_file=None, name_regex=None, **kwargs):
         rot = rot.inv()
 
         data = pd.DataFrame()
-        data[Naaf.COORD_HEADERS] = coords
-        data[Naaf.ROT_HEADER] = np.asarray(rot)
+        data[CPDL.POSITION] = coords
+        data[CPDL.ORIENTATION] = np.asarray(rot)
 
         particles.append(
             Particles(
-                data=data,
+                data=validate_cryopose_dataframe(data, ndim=3, coerce=True),
                 name=name,
             )
         )

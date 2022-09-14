@@ -2,12 +2,6 @@
 # uppercase is intrinsic, lowercase extrinsic
 
 
-class Naaf:
-    COORD_HEADERS = ["x", "y", "z"]
-    ROT_HEADER = "rot"
-    ALL_HEADERS = COORD_HEADERS + [ROT_HEADER]
-
-
 class Relion:
     COORD_HEADERS = [f"rlnCoordinate{axis}" for axis in "XYZ"]
     EULER_HEADERS = [f"rlnAngle{angle}" for angle in ["Rot", "Tilt", "Psi"]]

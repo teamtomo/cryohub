@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 import starfile
+from cryopose import CryoPoseDataLabels as CPDL
+from cryopose import validate_cryopose_dataframe
 from scipy.spatial.transform import Rotation
 
 from ..data import Particles
-from ..utils.constants import Naaf, Relion
+from ..utils.constants import Relion
 from ..utils.generic import ParseError, guess_name
 
 
@@ -45,9 +47,7 @@ def extract_data(
         name = guess_name(micrograph_name, name_regex)
 
         coords = np.asarray(df_volume[coord_headers], dtype=float)
-        shifts = np.asarray(
-            df_volume.get(shift_headers, 0), dtype=float
-        )
+        shifts = np.asarray(df_volume.get(shift_headers, 0), dtype=float)
 
         pixel_size = df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode])
         if pixel_size is not None:
@@ -76,13 +76,13 @@ def extract_data(
         features = df_volume.drop(columns=Relion.ALL_HEADERS, errors="ignore")
 
         data = pd.DataFrame()
-        data[Naaf.COORD_HEADERS] = coords
-        data[Naaf.ROT_HEADER] = np.asarray(rot)
+        data[CPDL.POSITION] = coords
+        data[CPDL.ORIENTATION] = np.asarray(rot)
         data = pd.concat([data, features], axis=1)
 
         particles.append(
             Particles(
-                data=data,
+                data=validate_cryopose_dataframe(data, ndim=3, coerce=True),
                 pixel_size=pixel_size,
                 name=name,
             )

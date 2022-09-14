@@ -4,18 +4,18 @@ repos:
     hooks:
     - id: isort
 -   repo: https://github.com/psf/black
-    rev: 21.12b0
+    rev: 22.8.0
     hooks:
     - id: black
       pass_filenames: true
 -   repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
     - id: flake8
-      additional_dependencies: [flake8-typing-imports==1.11.0]
+      additional_dependencies: [flake8-typing-imports]
       pass_filenames: true
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.0
+    rev: v2.37.3
     hooks:
     - id: pyupgrade
       args: ["--py38-plus", "--keep-runtime-typing"]
