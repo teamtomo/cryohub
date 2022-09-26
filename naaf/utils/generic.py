@@ -13,7 +13,7 @@ class ParseError(RuntimeError):
 common_name_regexes = (
     r"TS_\d+",
     r"series_\d+",
-    r"_\d+",
+    r"\w+_\d+",
     r"\d+",
 )
 
@@ -30,6 +30,8 @@ def guess_name(string, name_regex=None):
     regexes = name_regex + regexes
     for regex in regexes:
         if match := re.search(regex, str(string)):
+            if match.groups():
+                return match.group(1)
             return match.group(0)
     else:
         return None
