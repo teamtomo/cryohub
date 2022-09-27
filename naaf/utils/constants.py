@@ -14,19 +14,34 @@ class Relion:
     SHIFT_HEADERS = {
         "3.0": [f"rlnOrigin{axis}" for axis in "XYZ"],
         "3.1": [f"rlnOrigin{axis}Angst" for axis in "XYZ"],
+        "4.0": [f"rlnOrigin{axis}Angst" for axis in "XYZ"],
     }
-    PIXEL_SIZE_HEADERS = {"3.0": ["rlnDetectorPixelSize"], "3.1": ["rlnImagePixelSize"]}
-    MICROGRAPH_NAME_HEADER = "rlnMicrographName"
+    PIXEL_SIZE_HEADER = {
+        "3.0": "rlnDetectorPixelSize",
+        "3.1": "rlnImagePixelSize",
+        "4.0": "rlnTomoTiltSeriesPixelSize",
+    }
+    MICROGRAPH_NAME_HEADER = {
+        "3.0": "rlnMicrographName",
+        "3.1": "rlnMicrographName",
+        "4.0": "rlnTomoName",
+    }
     OPTICS_GROUP_HEADER = "rlnOpticsGroup"
     ALL_HEADERS = (
         COORD_HEADERS
         + EULER_HEADERS
         + SHIFT_HEADERS["3.0"]
         + SHIFT_HEADERS["3.1"]
-        + PIXEL_SIZE_HEADERS["3.0"]
-        + PIXEL_SIZE_HEADERS["3.1"]
-        + [MICROGRAPH_NAME_HEADER]
-        + [OPTICS_GROUP_HEADER]
+        + SHIFT_HEADERS["4.0"]
+        + [
+            PIXEL_SIZE_HEADER["3.0"],
+            PIXEL_SIZE_HEADER["3.1"],
+            PIXEL_SIZE_HEADER["4.0"],
+            MICROGRAPH_NAME_HEADER["3.0"],
+            MICROGRAPH_NAME_HEADER["3.1"],
+            MICROGRAPH_NAME_HEADER["4.0"],
+            OPTICS_GROUP_HEADER,
+        ]
     )
 
     EULER = "ZYZ"

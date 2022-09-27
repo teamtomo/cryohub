@@ -8,56 +8,37 @@ from ..utils.constants import Naaf, Relion
 from ..utils.generic import ParseError, guess_name
 
 
-def extract_data(
-    df,
-    mode="3.1",
+def parse_groups(
+    groups,
+    coord_headers,
+    shift_headers,
+    pixel_size_headers,
+    euler_convention,
+    rescale_shifts=False,
     name_regex=None,
-    star_path="",
-    **kwargs,
 ):
-    """
-    extract particle data from a starfile dataframe
-    """
-    if Relion.COORD_HEADERS[-1] in df.columns:
-        coord_headers = Relion.COORD_HEADERS
-        shift_headers = Relion.SHIFT_HEADERS[mode]
-    else:
-        coord_headers = Relion.COORD_HEADERS[:2]
-        shift_headers = Relion.SHIFT_HEADERS[mode][:2]
-
-    if Relion.EULER_HEADERS[0] in df.columns:
-        euler_headers = Relion.EULER_HEADERS
-        euler_convention = Relion.EULER
-    else:
-        euler_headers = Relion.EULER_HEADERS[-1:]
-        euler_convention = Relion.INPLANE
-
-    if Relion.MICROGRAPH_NAME_HEADER in df.columns:
-        groups = df.groupby(Relion.MICROGRAPH_NAME_HEADER)
-    else:
-        groups = [(star_path, df)]
-
     particles = []
+
     for micrograph_name, df_volume in groups:
         # drop global index to prevent issues with concatenation and similar
         df_volume = df_volume.reset_index(drop=True)
 
         name = guess_name(micrograph_name, name_regex)
 
-        coords = np.asarray(df_volume[coord_headers], dtype=float)
+        coords = np.asarray(df_volume.get(coord_headers, 0), dtype=float)
         shifts = np.asarray(df_volume.get(shift_headers, 0), dtype=float)
 
-        pixel_size = df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode])
+        pixel_size = df_volume.get(pixel_size_headers, None)
         if pixel_size is not None:
             pixel_size = np.asarray(pixel_size, dtype=float)
             # XXX TODO: remove the following and support variable pixel sizes?
             pixel_size = pixel_size.ravel()[0]
-
-        # only relion 3.1 has shifts in angstroms
-        if mode == "3.1":
-            if pixel_size is None:
-                raise ParseError("Detected Relion 3.1 format, but no pixel size data!")
-            shifts = shifts / pixel_size
+            if rescale_shifts:
+                shifts = shifts / pixel_size
+        elif rescale_shifts:
+            raise ParseError(
+                "pixel size information is missing, but it is required because shifts are in Angstroms!"
+            )
 
         coords -= shifts
 
@@ -65,7 +46,7 @@ def extract_data(
         if coords.shape[-1] == 2:
             coords = np.pad(coords, ((0, 0), (0, 1)))
 
-        eulers = np.asarray(df_volume.get(euler_headers, 0), dtype=float)
+        eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS, 0), dtype=float)
         rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
 
         # we want the inverse, which when applied to basis vectors it gives us the particle orientation
@@ -89,48 +70,74 @@ def extract_data(
     return particles
 
 
-def parse_relion30(raw_data, **kwargs):
-    """
-    Attempt to parse raw data dict from starfile.read as a RELION 3.0 style star file
-    """
-    if len(raw_data.values()) > 1:
-        raise ParseError("Cannot parse as RELION 3.0 format STAR file")
+def parse_relion_star(
+    df,
+    name_regex=None,
+    star_path="",
+    **kwargs,
+):
+    # find out which columns are present and which version we're dealing with
+    rescale_shifts = True
 
-    df = list(raw_data.values())[0]
-    return extract_data(df, mode="3.0", **kwargs)
+    if Relion.PIXEL_SIZE_HEADER["3.1"] in df.columns:
+        # 3.1 has priority over 4 (cause it's still used in 4 for single particle)
+        version = "3.1"
+    elif Relion.PIXEL_SIZE_HEADER["4.0"] in df.columns:
+        version = "4.0"
+    else:
+        # also includes if this is not present (required for later versions!)
+        version = "3.0"
+        rescale_shifts = False
 
+    pixel_size_headers = Relion.PIXEL_SIZE_HEADER[version]
+    shift_headers = Relion.SHIFT_HEADERS[version]
 
-def parse_relion31(raw_data, **kwargs):
-    """
-    Attempt to parse raw data from starfile.read as a RELION 3.1 style star file
-    """
-    if list(raw_data.keys()) != ["optics", "particles"]:
-        raise ParseError("Cannot parse as RELION 3.1 format STAR file")
+    if (
+        Relion.COORD_HEADERS[0] not in df.columns
+        or Relion.COORD_HEADERS[1] not in df.columns
+    ):
+        raise ParseError("coordinate information missing")
+    elif Relion.COORD_HEADERS[-1] in df.columns:
+        coord_headers = Relion.COORD_HEADERS
+    else:
+        coord_headers = Relion.COORD_HEADERS[:2]
+        shift_headers = shift_headers[:2]
 
-    df = raw_data["particles"].merge(raw_data["optics"])
-    return extract_data(df, mode="3.1", **kwargs)
+    if Relion.EULER_HEADERS[0] in df.columns:
+        euler_convention = Relion.EULER
+    else:
+        euler_convention = Relion.INPLANE
 
+    # start parsing
+    if Relion.MICROGRAPH_NAME_HEADER[version] in df.columns:
+        groups = df.groupby(Relion.MICROGRAPH_NAME_HEADER[version])
+    else:
+        groups = [(star_path, df)]
 
-reader_functions = {
-    "relion_3.0": parse_relion30,
-    "relion_3.1": parse_relion31,
-}
+    return parse_groups(
+        groups,
+        coord_headers,
+        shift_headers,
+        pixel_size_headers,
+        euler_convention,
+        rescale_shifts,
+        name_regex=name_regex,
+    )
 
 
 def read_star(star_path, **kwargs):
-    """
-    Dispatch function for reading a starfile into one or multiple ParticleBlocks
-    """
     try:
         raw_data = starfile.read(star_path, always_dict=True)
     except pd.errors.EmptyDataError:  # raised sometimes by .star files with completely different data
         raise ParseError(f"the contents of {star_path} have the wrong format")
 
-    failed_reader_functions = []
-    for style, reader_function in reader_functions.items():
-        try:
-            particle_blocks = reader_function(raw_data, star_path=star_path, **kwargs)
-            return particle_blocks
-        except ParseError:
-            failed_reader_functions.append((style, reader_function))
-    raise ParseError(f"Failed to parse {star_path} using {failed_reader_functions}")
+    if len(raw_data) == 1:
+        df = list(raw_data.values())[0]
+    elif "particles" in raw_data and "optics" in raw_data:
+        df = raw_data["particles"].merge(raw_data["optics"])
+    else:
+        raise ParseError(
+            f"Failed to parse {star_path} as particles. Are you sure this is a particle file?"
+        )
+
+    return parse_relion_star(df, star_path=star_path, **kwargs)
