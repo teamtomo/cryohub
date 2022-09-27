@@ -7,5 +7,9 @@ def write_mrc(image, file_path, overwrite=False):
     """
     if not file_path.endswith(".mrc"):
         file_path = file_path + ".mrc"
-    # TODO: pass pixel size and other stuff to header
-    mrcfile.new(file_path, image.data, overwrite=overwrite)
+
+    mrc = mrcfile.new(file_path, image.data, overwrite=overwrite)
+    if image.pixel_size is not None:
+        mrc.voxel_size = image.pixel_size
+    mrc.set_image_stack() if image.stack else mrc.set_volume()
+    mrc.close()
