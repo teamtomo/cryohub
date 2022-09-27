@@ -1,8 +1,8 @@
-from scipy.spatial.transform import Rotation
 import starfile
+from scipy.spatial.transform import Rotation
 
-from ..utils.generic import guess_name
 from ..utils.constants import Relion
+from ..utils.generic import guess_name
 
 
 def read_cbox(
@@ -10,8 +10,8 @@ def read_cbox(
     name_regex=None,
     **kwargs,
 ):
-    data = starfile.read(cbox_path)['cryolo']
-    coords = data[[f'Coordinate{axis}' for axis in 'XYZ']].to_numpy()
+    data = starfile.read(cbox_path)["cryolo"]
+    coords = data[[f"Coordinate{axis}" for axis in "XYZ"]].to_numpy()
     rot = Rotation.identity(len(coords)).as_euler(Relion.EULER)
     name = guess_name(cbox_path, name_regex)
-    return coords, rot, {'name': name}
+    return coords, rot, {"name": name}

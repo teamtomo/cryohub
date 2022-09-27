@@ -45,9 +45,7 @@ def extract_data(
         name = guess_name(micrograph_name, name_regex)
 
         coords = np.asarray(df_volume[coord_headers], dtype=float)
-        shifts = np.asarray(
-            df_volume.get(shift_headers, 0), dtype=float
-        )
+        shifts = np.asarray(df_volume.get(shift_headers, 0), dtype=float)
 
         pixel_size = df_volume.get(Relion.PIXEL_SIZE_HEADERS[mode])
         if pixel_size is not None:

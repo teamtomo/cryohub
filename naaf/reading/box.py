@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-from ..utils.generic import guess_name
-from ..utils.constants import Relion
 from ..data import Particles
+from ..utils.constants import Relion
+from ..utils.generic import guess_name
 
 
 def read_box(
