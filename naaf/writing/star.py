@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation
 from ..utils.constants import POSESET_REDUNDANT_HEADERS, Relion
 
 
-def write_star(particles, file_path, features=None, version="4.0", overwrite=False):
+def write_star(particles, file_path, version="4.0", overwrite=False):
     """
     write particle data to disk as a .star file
     """
