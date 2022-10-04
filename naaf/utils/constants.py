@@ -1,11 +1,13 @@
-# euler angle definitions are as expected by scipy Rotation objects
-# uppercase is intrinsic, lowercase extrinsic
+from cryotypes.poseset import PoseSetDataLabels as PSDL
 
-
-class Naaf:
-    COORD_HEADERS = ["x", "y", "z"]
-    ROT_HEADER = "rot"
-    ALL_HEADERS = COORD_HEADERS + [ROT_HEADER]
+POSESET_REDUNDANT_HEADERS = [
+    *PSDL.POSITION,
+    *PSDL.SHIFT,
+    PSDL.ORIENTATION,
+    PSDL.EXPERIMENT_ID,
+    PSDL.PIXEL_SPACING,
+    PSDL.SOURCE,
+]
 
 
 class Relion:
@@ -27,7 +29,20 @@ class Relion:
         "4.0": "rlnTomoName",
     }
     OPTICS_GROUP_HEADER = "rlnOpticsGroup"
-    ALL_HEADERS = (
+    POSSIBLE_OPTICS_GROUP_HEADERS = [
+        "rlnVoltage",
+        "rlnSphericalAberration",
+        "rlnAmplitudeContrast",
+        "rlnImageSize",
+        "rlnImageDimensionality",
+        "rlnOpticsGroupName",
+        "rlnDetectorPixelSize",
+        "rlnImagePixelSize",
+        "rlnTomoTiltSeriesPixelSize",
+        "rlnMicrographOriginalPixelSize",
+        "rlnImageSize",
+    ]
+    REDUNDANT_HEADERS = (
         COORD_HEADERS
         + EULER_HEADERS
         + SHIFT_HEADERS["3.0"]
@@ -40,10 +55,11 @@ class Relion:
             MICROGRAPH_NAME_HEADER["3.0"],
             MICROGRAPH_NAME_HEADER["3.1"],
             MICROGRAPH_NAME_HEADER["4.0"],
-            OPTICS_GROUP_HEADER,
         ]
     )
 
+    # euler angle definitions are as expected by scipy Rotation objects
+    # uppercase is intrinsic, lowercase extrinsic
     EULER = "ZYZ"
     INPLANE = "Z"
 
@@ -55,7 +71,9 @@ class Dynamo:
         3: ["tdrot", "tilt", "narot"],
         2: ["tilt"],  # TODO: 2d column name might be wrong!
     }
-    ALL_HEADERS = COORD_HEADERS + SHIFT_HEADERS + EULER_HEADERS[3]
+    EXP_ID_HEADER = "tomo"
+    EXP_NAME_HEADER = "tomo_file"
+    REDUNDANT_HEADERS = COORD_HEADERS + SHIFT_HEADERS + EULER_HEADERS[3]
 
     EULER = "zxz"
     INPLANE = "z"

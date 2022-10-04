@@ -1,10 +1,10 @@
-import numpy as np
+import emfile
 
-from naaf.data import Image
 from naaf.writing.em import write_em
 
 
-def test_write_em(tmp_path):
+def test_write_em(tmp_path, volume):
     file_path = tmp_path / "test.em"
-    imageblock = Image(data=np.ones((3, 3, 3)))
-    write_em(imageblock, str(file_path))
+    write_em(volume, str(file_path))
+    _, data = emfile.read(file_path)
+    assert data.shape == (3, 3, 3)

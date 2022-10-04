@@ -10,6 +10,5 @@ def write_mrc(image, file_path, overwrite=False):
 
     mrc = mrcfile.new(file_path, image.data, overwrite=overwrite)
     mrc.set_image_stack() if image.stack else mrc.set_volume()
-    if image.pixel_size is not None:
-        mrc.voxel_size = image.pixel_size[0]  # TODO anisotropic
+    mrc.voxel_size = image.pixel_spacing
     mrc.close()
