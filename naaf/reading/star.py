@@ -58,7 +58,7 @@ def construct_poseset(
     data[PSDL.POSITION[:ndim]] = coords
     data[PSDL.SHIFT[:ndim]] = -shifts  # relion subtracts from coords
     data[PSDL.ORIENTATION] = np.asarray(rot)
-    data[PSDL.PIXEL_SPACING] = pixel_size or np.nan
+    data[PSDL.PIXEL_SPACING] = pixel_size or 0
     data[PSDL.EXPERIMENT_ID] = exp_id
     data[PSDL.SOURCE] = star_path
     data = pd.concat([data, features], axis=1)
