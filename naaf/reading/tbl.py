@@ -1,67 +1,52 @@
 import dynamotable
 import numpy as np
 import pandas as pd
+from cryotypes.poseset import PoseSetDataLabels as PSDL
+from cryotypes.poseset import validate_poseset_dataframe
 from scipy.spatial.transform import Rotation
 
-from ..data import Particles
-from ..utils.constants import Dynamo, Naaf
-from ..utils.generic import guess_name
+from ..utils.constants import Dynamo
+from ..utils.generic import guess_name_vec
 
 
-def name_from_volume(volume_identifier, name_regex=None):
-    """Generate ParticleBlock name from volume identifier from dataframe"""
-    if isinstance(volume_identifier, int):
-        return str(volume_identifier)
-    elif isinstance(volume_identifier, str):
-        return guess_name(volume_identifier, name_regex)
-
-
-def read_tbl(table_path, table_map_file=None, name_regex=None, **kwargs):
+def read_tbl(table_path, table_map_file=None, guess_id=True, name_regex=None, **kwargs):
     """
     Read particles from a dynamo format table file
     """
     df = dynamotable.read(table_path, table_map_file)
 
-    split_on = "tomo"
-    if "tomo_file" in df.columns:
-        split_on = "tomo_file"
+    if Dynamo.EXP_NAME_HEADER in df.columns:
+        exp_id = df[Dynamo.EXP_NAME_HEADER]
+        if guess_id:
+            exp_id = guess_name_vec(exp_id, name_regex)
+    else:
+        exp_id = df[Dynamo.EXP_ID_HEADER].astype(str)
 
     if Dynamo.COORD_HEADERS[-1] in df.columns:
-        dim = 3
+        ndim = 3
     else:
-        dim = 2
+        ndim = 2
 
-    particles = []
-    for volume, df_volume in df.groupby(split_on):
-        # drop global index to prevent issues with concatenation and similar
-        df_volume = df_volume.reset_index(drop=True)
+    coords = np.asarray(df[Dynamo.COORD_HEADERS[:ndim]], dtype=float)
+    shifts = np.asarray(df.get(Dynamo.SHIFT_HEADERS[:ndim], 0), dtype=float)
+    eulers = np.asarray(df.get(Dynamo.EULER_HEADERS[ndim], 0), dtype=float)
 
-        name = name_from_volume(volume, name_regex)
-        coords = np.asarray(df_volume[Dynamo.COORD_HEADERS[:dim]], dtype=float)
-        shifts = np.asarray(df_volume.get(Dynamo.SHIFT_HEADERS[:dim], 0), dtype=float)
-        coords += shifts
-        # always work with 3D, add z=0
-        if dim == 2:
-            coords = np.pad(coords, ((0, 0), (0, 1)))
+    if ndim == 3:
+        rot = Rotation.from_euler(Dynamo.EULER, eulers, degrees=True)
+    else:
+        rot = Rotation.from_euler(Dynamo.INPLANE, eulers, degrees=True)
 
-        eulers = np.asarray(df_volume.get(Dynamo.EULER_HEADERS[dim], 0), dtype=float)
-        if dim == 3:
-            rot = Rotation.from_euler(Dynamo.EULER, eulers, degrees=True)
-        else:
-            rot = Rotation.from_euler(Dynamo.INPLANE, eulers, degrees=True)
+    # we want the inverse, which when applied to basis vectors it gives us the particle orientation
+    rot = rot.inv()
 
-        # we want the inverse, which when applied to basis vectors it gives us the particle orientation
-        rot = rot.inv()
+    features = df.drop(columns=Dynamo.REDUNDANT_HEADERS, errors="ignore")
 
-        data = pd.DataFrame()
-        data[Naaf.COORD_HEADERS] = coords
-        data[Naaf.ROT_HEADER] = np.asarray(rot)
+    data = pd.DataFrame()
+    data[PSDL.POSITION[:ndim]] = coords
+    data[PSDL.SHIFT[:ndim]] = shifts
+    data[PSDL.ORIENTATION] = np.asarray(rot)
+    data[PSDL.EXPERIMENT_ID] = exp_id
+    data[PSDL.SOURCE] = table_path
+    data = pd.concat([data, features], axis=1)
 
-        particles.append(
-            Particles(
-                data=data,
-                name=name,
-            )
-        )
-
-    return particles
+    return validate_poseset_dataframe(data, coerce=True)

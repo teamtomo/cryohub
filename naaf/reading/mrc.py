@@ -1,9 +1,9 @@
 import dask.array as da
 import mrcfile
 import numpy as np
+from cryotypes.image import Image, validate_image
 from numpy.lib.recfunctions import structured_to_unstructured
 
-from ..data import Image
 from ..utils.generic import guess_name
 
 
@@ -20,13 +20,16 @@ def read_mrc(image_path, name_regex=None, lazy=True, **kwargs):
             data = np.asarray(mrc.data)
 
         # TODO: support anisotropic pixel sizes
-        pixel_size = structured_to_unstructured(mrc.voxel_size)[0] or None
+        pixel_size = structured_to_unstructured(mrc.voxel_size)[0] or 0
 
         stack = mrc.is_image_stack() or mrc.is_volume_stack()
 
-    return Image(
+    tomo = Image(
         data=data,
-        name=name,
-        pixel_size=pixel_size,
+        experiment_id=name,
+        pixel_spacing=pixel_size,
+        source=image_path,
         stack=stack,
     )
+
+    return validate_image(tomo, coerce=True)
