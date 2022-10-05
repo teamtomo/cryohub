@@ -1,22 +1,38 @@
-import numpy as np
 import pandas as pd
-from scipy.spatial.transform import Rotation
+import starfile
 
-from naaf.data import Particles
-from naaf.utils.constants import Naaf
+from naaf.utils.constants import Relion
+from naaf.utils.testing import assert_dataframe_equal
 from naaf.writing.star import write_star
 
+version = "4.0"
 
-def test_write_star(tmp_path):
+base_columns = [
+    *Relion.COORD_HEADERS,
+    *Relion.SHIFT_HEADERS[version],
+    *Relion.EULER_HEADERS,
+    Relion.PIXEL_SIZE_HEADER[version],
+    Relion.MICROGRAPH_NAME_HEADER[version],
+]
+
+
+def test_write_star3D(tmp_path, poseset, relion40_star):
     file_path = tmp_path / "test.star"
-    data = pd.DataFrame()
-    data[Naaf.COORD_HEADERS] = np.ones((2, 3))
-    data[Naaf.ROT_HEADER] = np.asarray(Rotation.identity(2))
-    data["feature"] = ["x", "y"]
 
-    particle = Particles(
-        data=data,
-        name="test",
+    write_star(poseset, file_path)
+    data = starfile.read(file_path)
+    expected = pd.merge(
+        relion40_star["particles"], relion40_star["optics"], on="rlnOpticsGroup"
     )
+    assert_dataframe_equal(data, expected, columns=base_columns + ["feature"])
 
-    write_star(particle, file_path)
+
+def test_write_star2D(tmp_path, poseset2D, relion40_star2D):
+    file_path = tmp_path / "test.star"
+
+    write_star(poseset2D, file_path)
+    data = starfile.read(file_path)
+    expected = pd.merge(
+        relion40_star2D["particles"], relion40_star2D["optics"], on="rlnOpticsGroup"
+    )
+    assert_dataframe_equal(data, expected, columns=base_columns)

@@ -1,79 +1,76 @@
 import numpy as np
 import pandas as pd
 import starfile
+from cryotypes.poseset import PoseSetDataLabels as PSDL
+from cryotypes.poseset import validate_poseset_dataframe
 from scipy.spatial.transform import Rotation
 
-from ..data import Particles
-from ..utils.constants import Naaf, Relion
-from ..utils.generic import ParseError, guess_name
+from ..utils.constants import Relion
+from ..utils.generic import ParseError, guess_name_vec
 
 
-def parse_groups(
-    groups,
+def construct_poseset(
+    df,
     coord_headers,
     shift_headers,
     pixel_size_headers,
-    euler_convention,
+    exp_header,
+    star_path,
     rescale_shifts=False,
     name_regex=None,
+    guess_id=True,
 ):
-    particles = []
+    coords = np.asarray(df.get(coord_headers, 0), dtype=float)
+    ndim = len(coord_headers)
+    shifts = np.asarray(df.get(shift_headers, 0), dtype=float)
 
-    for micrograph_name, df_volume in groups:
-        # drop global index to prevent issues with concatenation and similar
-        df_volume = df_volume.reset_index(drop=True)
-
-        name = guess_name(micrograph_name, name_regex)
-
-        coords = np.asarray(df_volume.get(coord_headers, 0), dtype=float)
-        shifts = np.asarray(df_volume.get(shift_headers, 0), dtype=float)
-
-        pixel_size = df_volume.get(pixel_size_headers, None)
-        if pixel_size is not None:
-            pixel_size = np.asarray(pixel_size, dtype=float)
-            # XXX TODO: remove the following and support variable pixel sizes?
-            pixel_size = pixel_size.ravel()[0]
-            if rescale_shifts:
-                shifts = shifts / pixel_size
-        elif rescale_shifts:
-            raise ParseError(
-                "pixel size information is missing, but it is required because shifts are in Angstroms!"
-            )
-
-        coords -= shifts
-
-        # always work with 3D, add z=0
-        if coords.shape[-1] == 2:
-            coords = np.pad(coords, ((0, 0), (0, 1)))
-
-        eulers = np.asarray(df_volume.get(Relion.EULER_HEADERS, 0), dtype=float)
-        rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
-
-        # we want the inverse, which when applied to basis vectors it gives us the particle orientation
-        rot = rot.inv()
-
-        features = df_volume.drop(columns=Relion.ALL_HEADERS, errors="ignore")
-
-        data = pd.DataFrame()
-        data[Naaf.COORD_HEADERS] = coords
-        data[Naaf.ROT_HEADER] = np.asarray(rot)
-        data = pd.concat([data, features], axis=1)
-
-        particles.append(
-            Particles(
-                data=data,
-                pixel_size=pixel_size,
-                name=name,
-            )
+    pixel_size = df.get(pixel_size_headers, None)
+    if pixel_size is not None:
+        pixel_size = np.asarray(pixel_size, dtype=float)
+        # XXX TODO: remove the following and support variable pixel sizes?
+        pixel_size = pixel_size.ravel()[0]
+        if rescale_shifts:
+            shifts = shifts / pixel_size
+    elif rescale_shifts:
+        raise ParseError(
+            "pixel size information is missing, but it is required because shifts are in Angstroms!"
         )
 
-    return particles
+    if Relion.EULER_HEADERS[0] in df.columns:
+        euler_convention = Relion.EULER
+        eulers = np.asarray(df.get(Relion.EULER_HEADERS, 0), dtype=float)
+    else:
+        euler_convention = Relion.INPLANE
+        eulers = np.asarray(df.get(Relion.EULER_HEADERS[2], 0), dtype=float)
+
+    rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
+
+    # we want the inverse, which when applied to basis vectors it gives us the particle orientation
+    rot = rot.inv()
+
+    features = df.drop(columns=Relion.REDUNDANT_HEADERS, errors="ignore")
+
+    exp_id = df[exp_header]
+    if guess_id:
+        exp_id = guess_name_vec(exp_id, name_regex)
+
+    data = pd.DataFrame()
+    data[PSDL.POSITION[:ndim]] = coords
+    data[PSDL.SHIFT[:ndim]] = -shifts  # relion subtracts from coords
+    data[PSDL.ORIENTATION] = np.asarray(rot)
+    data[PSDL.PIXEL_SPACING] = pixel_size or 0
+    data[PSDL.EXPERIMENT_ID] = exp_id
+    data[PSDL.SOURCE] = star_path
+    data = pd.concat([data, features], axis=1)
+
+    return validate_poseset_dataframe(data, coerce=True)
 
 
 def parse_relion_star(
     df,
-    name_regex=None,
     star_path="",
+    name_regex=None,
+    guess_id=True,
     **kwargs,
 ):
     # find out which columns are present and which version we're dealing with
@@ -103,25 +100,22 @@ def parse_relion_star(
         coord_headers = Relion.COORD_HEADERS[:2]
         shift_headers = shift_headers[:2]
 
-    if Relion.EULER_HEADERS[0] in df.columns:
-        euler_convention = Relion.EULER
-    else:
-        euler_convention = Relion.INPLANE
-
     # start parsing
     if Relion.MICROGRAPH_NAME_HEADER[version] in df.columns:
-        groups = df.groupby(Relion.MICROGRAPH_NAME_HEADER[version])
+        exp_header = Relion.MICROGRAPH_NAME_HEADER[version]
     else:
-        groups = [(star_path, df)]
+        exp_header = None
 
-    return parse_groups(
-        groups,
+    return construct_poseset(
+        df,
         coord_headers,
         shift_headers,
         pixel_size_headers,
-        euler_convention,
-        rescale_shifts,
+        exp_header,
+        star_path,
+        rescale_shifts=rescale_shifts,
         name_regex=name_regex,
+        guess_id=guess_id,
     )
 
 
@@ -134,7 +128,9 @@ def read_star(star_path, **kwargs):
     if len(raw_data) == 1:
         df = list(raw_data.values())[0]
     elif "particles" in raw_data and "optics" in raw_data:
-        df = raw_data["particles"].merge(raw_data["optics"])
+        df = raw_data["particles"].merge(
+            raw_data["optics"], on=Relion.OPTICS_GROUP_HEADER
+        )
     else:
         raise ParseError(
             f"Failed to parse {star_path} as particles. Are you sure this is a particle file?"

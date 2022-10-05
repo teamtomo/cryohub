@@ -54,6 +54,7 @@ def filter_readable(paths):
 
 def read(
     *paths,
+    guess_id=True,
     name_regex=None,
     names=None,
     strict=False,
@@ -63,6 +64,8 @@ def read(
     r"""
     Read any number of paths.
 
+    guess_id:   try to guess experiment ids from the raw data, using default regexes
+                ("\w+_\d+" and "\d+") or a custom one provided with name_regex
     name_regex: a regex used to infer names from paths or micrograph names. For example:
                 'Protein_\d+' will match 'MyProtein_10.star' and 'MyProtein_001.mrc'
                 and name the respective DataBlocks 'Protein_10' and 'Protein_01'
@@ -73,7 +76,11 @@ def read(
     data = []
     for file in filter_readable(paths):
         try:
-            data.extend(read_file(file, name_regex=name_regex, lazy=lazy, **kwargs))
+            data.extend(
+                read_file(
+                    file, name_regex=name_regex, guess_id=guess_id, lazy=lazy, **kwargs
+                )
+            )
         except ParseError:
             if strict:
                 raise

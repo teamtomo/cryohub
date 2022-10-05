@@ -1,22 +1,20 @@
-import numpy as np
-import pandas as pd
-from scipy.spatial.transform import Rotation
+import dynamotable
 
-from naaf.data import Particles
-from naaf.utils.constants import Naaf
+from naaf.utils.constants import Dynamo
+from naaf.utils.testing import assert_dataframe_equal
 from naaf.writing.tbl import write_tbl
 
+base_columns = [
+    *Dynamo.COORD_HEADERS,
+    *Dynamo.SHIFT_HEADERS,
+    *Dynamo.EULER_HEADERS[3],
+    # Dynamo.EXP_ID_HEADER,  # TODO: this currently is lost because we can't write using tomo names
+]
 
-def test_write_tbl(tmp_path):
+
+def test_write_tbl(tmp_path, poseset, dynamo_tbl):
     file_path = tmp_path / "test.tbl"
-    data = pd.DataFrame()
-    data[Naaf.COORD_HEADERS] = np.ones((2, 3))
-    data[Naaf.ROT_HEADER] = np.asarray(Rotation.identity(2))
-    data["feature"] = ["x", "y"]
 
-    particle = Particles(
-        data=data,
-        name="test",
-    )
-
-    write_tbl(particle, file_path)
+    write_tbl(poseset, file_path)
+    data = dynamotable.read(file_path)
+    assert_dataframe_equal(data, dynamo_tbl, columns=base_columns)

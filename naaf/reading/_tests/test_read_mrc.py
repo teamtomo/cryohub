@@ -1,20 +1,22 @@
 import mrcfile
-import numpy as np
 
-from naaf.data import Image
 from naaf.reading.mrc import read_mrc
-from naaf.utils.testing import assert_data_equal
+from naaf.utils.testing import assert_dataclass_equal
+
+base_fields = ["data", "experiment_id", "pixel_spacing", "stack"]
 
 
-def test_read_mrc(tmp_path):
+def test_read_mrc_stack(tmp_path, image_stack):
     file_path = tmp_path / "test.mrc"
-    data = np.ones((3, 3, 3), dtype=np.float32)
-    mrcfile.new(str(file_path), data)
-    image = read_mrc(file_path, name_regex=r"\w+", lazy=False)
+    mrcfile.new(str(file_path), image_stack.data)
+    mrc = read_mrc(file_path, name_regex=r"\w+", lazy=False)
 
-    expected = Image(
-        data=data,
-        name="test",
-    )
+    assert_dataclass_equal(mrc, image_stack, fields=base_fields)
 
-    assert_data_equal(image, expected)
+
+def test_read_mrc_volume(tmp_path, volume):
+    file_path = tmp_path / "test.mrc"
+    mrcfile.new(str(file_path), volume.data)
+    mrc = read_mrc(file_path, name_regex=r"\w+", lazy=False)
+
+    assert_dataclass_equal(mrc, volume, fields=base_fields)

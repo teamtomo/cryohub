@@ -1,8 +1,8 @@
 import dask.array as da
 import emfile
 import numpy as np
+from cryotypes.image import Image, validate_image
 
-from ..data import Image
 from ..utils.generic import guess_name
 
 
@@ -19,10 +19,14 @@ def read_em(image_path, name_regex=None, lazy=True, **kwargs):
     else:
         data = np.asarray(data)
 
-    pixel_size = header["OBJ"] or None
+    pixel_size = header["OBJ"] or 0
 
-    return Image(
+    tomo = Image(
         data=data,
-        name=name,
-        pixel_size=pixel_size,
+        experiment_id=name,
+        pixel_spacing=pixel_size,
+        source=image_path,
+        stack=False,
     )
+
+    return validate_image(tomo, coerce=True)
