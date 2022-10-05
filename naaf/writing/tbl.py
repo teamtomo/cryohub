@@ -17,7 +17,7 @@ def write_tbl(particles, file_path):
     df[Dynamo.COORD_HEADERS[:ndim]] = particles[PSDL.POSITION[:ndim]]
     df[Dynamo.SHIFT_HEADERS[:ndim]] = particles[PSDL.SHIFT[:ndim]]
 
-    rot = Rotation.concatenate(particles[PSDL.ORIENTATION])
+    rot = Rotation.concatenate(particles[PSDL.ORIENTATION]).inv()  # invert back
     eulers = rot.as_euler(Dynamo.EULER, degrees=True)
     if np.allclose(eulers[:, 1:], 0):
         # single angle world

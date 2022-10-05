@@ -26,8 +26,8 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
         Relion.SHIFT_HEADERS[version][:ndim]
     ] = -shifts  # shifts are subtractive in relion
 
-    rot = Rotation.concatenate(particles[PSDL.ORIENTATION])
-    eulers = rot.as_euler(Relion.EULER, degrees=True)
+    rot = Rotation.concatenate(particles[PSDL.ORIENTATION]).inv()
+    eulers = rot.as_euler(Relion.EULER, degrees=True)  # invert for relion
     if np.allclose(eulers[:, 1:], 0):
         # single angle world
         df[Relion.EULER_HEADERS[2]] = eulers[:, 0]
