@@ -6,13 +6,14 @@ from cryotypes.poseset import PoseSetDataLabels as PSDL
 from cryotypes.poseset import validate_poseset_dataframe
 from scipy.spatial.transform import Rotation
 
+# some real use case
 _angles_relion = np.array(
     [[-18.20820, 138.764387, 10.931106], [-135.12769, 161.921662, -65.26683]]
 )
 
-_rotations = Rotation.from_euler("ZYZ", _angles_relion, degrees=True)
+_rotations = Rotation.from_euler("ZYZ", _angles_relion, degrees=True).inv()
 
-_angles_dynamo = _rotations.as_euler("zxz", degrees=True)
+_angles_dynamo = _rotations.inv().as_euler("zxz", degrees=True)
 
 
 @pytest.fixture
@@ -47,7 +48,7 @@ def poseset2D():
                 PSDL.SHIFT_X: [0.01, 0.01],
                 PSDL.SHIFT_Y: [0.02, 0.02],
                 PSDL.ORIENTATION: np.asarray(
-                    Rotation.from_euler("Z", [60, 45], degrees=True)
+                    Rotation.from_euler("Z", [60, 45], degrees=True).inv()
                 ),
                 PSDL.EXPERIMENT_ID: ["a", "b"],
                 PSDL.PIXEL_SPACING: [10, 10],
