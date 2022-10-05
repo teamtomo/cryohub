@@ -1,6 +1,6 @@
 # naaf
 
-`naaf` is a library for reading and writing Cryo-ET data.
+`naaf` is a library for reading and writing Cryo-ET data based on the [`cryotypes`](https://github.com/teamtomo/cryotypes/) specification.
 
 # Installation
 
@@ -8,13 +8,19 @@
 pip install naaf
 ```
 
-
 # Usage
 
-This command will land in an ipython shell with the loaded data collected in a list called `data`:
+`naaf` provides granular I/O functions such as `read_star` and `read_mrc`, which will all return objects following the `cryotypes` specification. A higher level function called `read` adds some magic to the IO procedure, guessing file formats and returning a list of `cryotypes`.
+
+Similarly to the `read_*` functions, `naaf` provides a series of `write_*` functions.
+
+
+## From the command line
+
+If you just need to quickly inspect your data, this command will land in an ipython shell with the loaded data collected in a list called `data`:
 
 ```bash
-naaf path/to/files/ /other/path/to/file.star
+naaf path/to/files/* /other/path/to/file.star
 ```
 
 
@@ -29,28 +35,16 @@ and particle data in the following formats:
 - Dynamo `.tbl`
 - Cryolo `.cbox` and `.box`
 
-# Data structures
-
-Data is loaded into simple data objects called `Particles` or `Image`. They have the following attributes:
-
-```python
-Data.name  # name guessed from the data or file path
-Data.source  # path to the file containing this data
-Data.pixel_size  # pixel size information extracted from the data. None if absent.
-
-Particles.data  # pandas DataFrame with coordinates, rotations and arbitary particle features
-
-Image.data  # data array with pixel intensities
-Image.stack  # whether the image is a stack of (N-1)D images
-```
-
-## Particle orientations
-
-Orientations are `scipy` `Rotation` objects. They can be handled normally in a pandas dataframe. They also provide useful batch tools:
-
-- `Rotation.concatenate(array_of_rotations)` will merge all the rotation objects into one
-- `rotation_object.apply(vectors)` will apply the rotation(s) (following numpy broadcasting rules) to vector(s)
+Writer functions currently exist for:
+- `.mrc`
+- Dynamo `.em`
+- Relion `.star`
+- Dynamo `.tbl`
 
 ## Image data
 
-When possible (and unless disabled), naaf loads images lazily using `dask`. The resulting objects can be treated as normal numpy array, except one needs to call `array.compute()` to apply any pending operations and return the result.
+When possible (and unless disabled), naaf loads images lazily using [`dask`](https://docs.dask.org/en/stable/array.html). The resulting objects can be treated as normal numpy array, except one needs to call `array.compute()` to apply any pending operations and return the result.
+
+# Contributing
+
+Contributions are more than welcome! If there is a file format that you wish were supported in reading or writing, simply open an issue about it pointing to the specification. Alternatively, feel free to open a PR with your proposed implementation; you can look at the existing functions for inspiration.
