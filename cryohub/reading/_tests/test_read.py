@@ -1,7 +1,7 @@
 import mrcfile
 import starfile
 
-from naaf.reading.main import read
+from cryohub.reading.main import read
 
 
 def test_read_path(tmp_path, image_stack, volume, relion40_star):

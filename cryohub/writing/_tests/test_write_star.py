@@ -1,9 +1,9 @@
 import pandas as pd
 import starfile
 
-from naaf.utils.constants import Relion
-from naaf.utils.testing import assert_dataframe_equal
-from naaf.writing.star import write_star
+from cryohub.utils.constants import Relion
+from cryohub.utils.testing import assert_dataframe_equal
+from cryohub.writing.star import write_star
 
 version = "4.0"
 

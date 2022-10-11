@@ -1,8 +1,8 @@
 import dynamotable
 from cryotypes.poseset import PoseSetDataLabels as PSDL
 
-from naaf.reading.tbl import read_tbl
-from naaf.utils.testing import assert_dataframe_equal
+from cryohub.reading.tbl import read_tbl
+from cryohub.utils.testing import assert_dataframe_equal
 
 base_columns = [
     *PSDL.POSITION,

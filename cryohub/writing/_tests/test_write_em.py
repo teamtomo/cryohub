@@ -1,6 +1,6 @@
 import emfile
 
-from naaf.writing.em import write_em
+from cryohub.writing.em import write_em
 
 
 def test_write_em(tmp_path, volume):

@@ -1,8 +1,8 @@
 import starfile
 from cryotypes.poseset import PoseSetDataLabels as PSDL
 
-from naaf.reading.star import read_star
-from naaf.utils.testing import assert_dataframe_equal
+from cryohub.reading.star import read_star
+from cryohub.utils.testing import assert_dataframe_equal
 
 base_columns = [
     *PSDL.POSITION,

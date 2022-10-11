@@ -18,7 +18,7 @@ import click
 @click.version_option()
 def cli(paths, name_regex, strict, lazy):
     r"""
-    naaf command line interface.
+    cryohub command line interface.
 
     Opens files and lands in an interactive ipython shell with data loaded as `data`
 
@@ -28,25 +28,25 @@ def cli(paths, name_regex, strict, lazy):
 
     Open a .star file as particles:
 
-        naaf particles.star
+        cryohub particles.star
 
     Open particles and images from a directory:
 
-        naaf /dir/with/star_and_mrc_files/
+        cryohub /dir/with/star_and_mrc_files/
 
     Match files such as MyProtein_10.star and MyProtein_001.mrc,
     and name the respective data objects Protein_10 and Protein_001:
 
-        naaf /path/to/dir/MyProtein* -n 'Protein_\d+'
+        cryohub /path/to/dir/MyProtein* -n 'Protein_\d+'
     """
     if not paths:
         paths = ["./*"]
 
     from IPython.terminal.embed import InteractiveShellEmbed
 
-    import naaf
+    import cryohub
 
-    data = naaf.read(  # noqa: F841
+    data = cryohub.read(  # noqa: F841
         *paths,
         name_regex=name_regex,
         strict=strict,
@@ -54,7 +54,7 @@ def cli(paths, name_regex, strict, lazy):
     )
 
     # set up ipython shell nicely
-    banner = "=== naaf ==="
+    banner = "=== cryohub ==="
     sh = InteractiveShellEmbed(banner2=banner)
     sh.push("data")
     sh()

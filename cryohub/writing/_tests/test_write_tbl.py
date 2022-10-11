@@ -1,8 +1,8 @@
 import dynamotable
 
-from naaf.utils.constants import Dynamo
-from naaf.utils.testing import assert_dataframe_equal
-from naaf.writing.tbl import write_tbl
+from cryohub.utils.constants import Dynamo
+from cryohub.utils.testing import assert_dataframe_equal
+from cryohub.writing.tbl import write_tbl
 
 base_columns = [
     *Dynamo.COORD_HEADERS,

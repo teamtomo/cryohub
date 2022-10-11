@@ -1,7 +1,7 @@
 import mrcfile
 
-from naaf.reading.mrc import read_mrc
-from naaf.utils.testing import assert_dataclass_equal
+from cryohub.reading.mrc import read_mrc
+from cryohub.utils.testing import assert_dataclass_equal
 
 base_fields = ["data", "experiment_id", "pixel_spacing", "stack"]
 

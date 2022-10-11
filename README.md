@@ -1,18 +1,18 @@
-# naaf
+# cryohub
 
-`naaf` is a library for reading and writing Cryo-ET data based on the [`cryotypes`](https://github.com/teamtomo/cryotypes/) specification.
+`cryohub` is a library for reading and writing Cryo-ET data based on the [`cryotypes`](https://github.com/teamtomo/cryotypes/) specification.
 
 # Installation
 
 ```
-pip install naaf
+pip install cryohub
 ```
 
 # Usage
 
-`naaf` provides granular I/O functions such as `read_star` and `read_mrc`, which will all return objects following the `cryotypes` specification. A higher level function called `read` adds some magic to the IO procedure, guessing file formats and returning a list of `cryotypes`.
+`cryohub` provides granular I/O functions such as `read_star` and `read_mrc`, which will all return objects following the `cryotypes` specification. A higher level function called `read` adds some magic to the IO procedure, guessing file formats and returning a list of `cryotypes`.
 
-Similarly to the `read_*` functions, `naaf` provides a series of `write_*` functions.
+Similarly to the `read_*` functions, `cryohub` provides a series of `write_*` functions.
 
 
 ## From the command line
@@ -20,13 +20,13 @@ Similarly to the `read_*` functions, `naaf` provides a series of `write_*` funct
 If you just need to quickly inspect your data, this command will land in an ipython shell with the loaded data collected in a list called `data`:
 
 ```bash
-naaf path/to/files/* /other/path/to/file.star
+cryohub path/to/files/* /other/path/to/file.star
 ```
 
 
 # Features
 
-Currently `naaf` is capable of reading images in the following formats:
+Currently `cryohub` is capable of reading images in the following formats:
 - `.mrc` (and the `.mrcs` or `.st` variants)
 - Dynamo `.em`
 
@@ -43,7 +43,7 @@ Writer functions currently exist for:
 
 ## Image data
 
-When possible (and unless disabled), naaf loads images lazily using [`dask`](https://docs.dask.org/en/stable/array.html). The resulting objects can be treated as normal numpy array, except one needs to call `array.compute()` to apply any pending operations and return the result.
+When possible (and unless disabled), cryohub loads images lazily using [`dask`](https://docs.dask.org/en/stable/array.html). The resulting objects can be treated as normal numpy array, except one needs to call `array.compute()` to apply any pending operations and return the result.
 
 # Contributing
 

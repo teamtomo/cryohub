@@ -1,6 +1,6 @@
 import mrcfile
 
-from naaf.writing.mrc import write_mrc
+from cryohub.writing.mrc import write_mrc
 
 
 def test_write_mrc_stack(tmp_path, image_stack):
