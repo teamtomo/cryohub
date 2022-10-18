@@ -44,7 +44,7 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'gutsche-lab/cryohub' && contains(github.ref, 'tags') }}
+    if: ${{ github.repository == 'teamtomo/cryohub' && contains(github.ref, 'tags') }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
