@@ -13,7 +13,7 @@ def read_mrc(image_path, name_regex=None, lazy=True, **kwargs):
     """
     name = guess_name(image_path, name_regex)
 
-    with mrcfile.mmap(image_path) as mrc:
+    with mrcfile.mmap(image_path, "r", permissive=True) as mrc:
         if lazy:
             data = da.from_array(mrc.data)
         else:
