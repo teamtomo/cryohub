@@ -29,6 +29,7 @@ cryohub path/to/files/* /other/path/to/file.star
 Currently `cryohub` is capable of reading images in the following formats:
 - `.mrc` (and the `.mrcs` or `.st` variants)
 - Dynamo `.em`
+- EMAN2 `.hdf`
 
 and particle data in the following formats:
 - Relion `.star`
@@ -37,6 +38,7 @@ and particle data in the following formats:
 
 Writer functions currently exist for:
 - `.mrc`
+- EMAN2 `.hdf`
 - Dynamo `.em`
 - Relion `.star`
 - Dynamo `.tbl`
