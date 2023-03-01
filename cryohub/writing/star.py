@@ -38,8 +38,8 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
     features = particles.drop(columns=POSESET_REDUNDANT_HEADERS, errors="ignore")
     df = pd.concat([df, features], axis=1)
 
-    # split out optics group if present
-    if Relion.OPTICS_GROUP_HEADER in particles.columns:
+    # split out optics group if present (and version > 3.0)
+    if version != "3.0" and Relion.OPTICS_GROUP_HEADER in particles.columns:
         optics_headers = [
             h for h in Relion.POSSIBLE_OPTICS_GROUP_HEADERS if h in particles.columns
         ]
