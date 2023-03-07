@@ -4,6 +4,7 @@ from ..utils.generic import ParseError, listify
 from .box import read_box
 from .cbox import read_cbox
 from .em import read_em
+from .hdf import read_hdf
 from .mrc import read_mrc
 from .star import read_star
 from .tbl import read_tbl
@@ -15,6 +16,7 @@ from .tbl import read_tbl
 readers = {
     (".star",): (read_star,),
     (".mrc", ".mrcs", ".st", ".map"): (read_mrc,),
+    (".hdf",): (read_hdf,),
     (".em",): (read_em,),
     (".tbl",): (read_tbl,),
     (".box",): (read_box,),
