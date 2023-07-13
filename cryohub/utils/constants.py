@@ -52,9 +52,6 @@ class Relion:
             PIXEL_SIZE_HEADER["3.0"],
             PIXEL_SIZE_HEADER["3.1"],
             PIXEL_SIZE_HEADER["4.0"],
-            MICROGRAPH_NAME_HEADER["3.0"],
-            MICROGRAPH_NAME_HEADER["3.1"],
-            MICROGRAPH_NAME_HEADER["4.0"],
         ]
     )
 

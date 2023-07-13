@@ -33,7 +33,7 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
         df[Relion.EULER_HEADERS[2]] = eulers[:, 0]
     else:
         df[Relion.EULER_HEADERS] = eulers
-    df[Relion.MICROGRAPH_NAME_HEADER[version]] = particles[PSDL.EXPERIMENT_ID]
+    df[PSDL.EXPERIMENT_ID] = particles[PSDL.EXPERIMENT_ID]
 
     features = particles.drop(columns=POSESET_REDUNDANT_HEADERS, errors="ignore")
     df = pd.concat([df, features], axis=1)
