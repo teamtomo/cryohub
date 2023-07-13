@@ -50,7 +50,8 @@ def construct_poseset(
 
     features = df.drop(columns=Relion.REDUNDANT_HEADERS, errors="ignore")
 
-    exp_id = df[exp_header]
+    exp_id = None if exp_header is None else df.get(exp_header, None)
+
     if guess_id:
         exp_id = guess_name_vec(exp_id, name_regex)
 
@@ -100,12 +101,9 @@ def parse_relion_star(
         coord_headers = Relion.COORD_HEADERS[:2]
         shift_headers = shift_headers[:2]
 
-    # start parsing
-    if Relion.MICROGRAPH_NAME_HEADER[version] in df.columns:
-        exp_header = Relion.MICROGRAPH_NAME_HEADER[version]
-    else:
-        exp_header = None
+    exp_header = Relion.MICROGRAPH_NAME_HEADER[version]
 
+    # start parsing
     return construct_poseset(
         df,
         coord_headers,
@@ -122,7 +120,9 @@ def parse_relion_star(
 def read_star(star_path, **kwargs):
     try:
         raw_data = starfile.read(star_path, always_dict=True)
-    except pd.errors.EmptyDataError:  # raised sometimes by .star files with completely different data
+    except (
+        pd.errors.EmptyDataError
+    ):  # raised sometimes by .star files with completely different data
         raise ParseError(f"the contents of {star_path} have the wrong format")
 
     if len(raw_data) == 1:
