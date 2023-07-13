@@ -13,7 +13,8 @@ class ParseError(RuntimeError):
 
 # a list of commonly used base names for paths in regex form
 common_name_regexes = (
-    r"\w+_\d+",
+    r"^\w+\d+",
+    r"^\w+_\d+",
     r"\d+",
 )
 
