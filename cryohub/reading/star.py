@@ -5,7 +5,7 @@ from cryotypes.poseset import PoseSetDataLabels as PSDL
 from cryotypes.poseset import validate_poseset_dataframe
 from scipy.spatial.transform import Rotation
 
-from ..utils.constants import Relion
+from ..utils.constants import POSESET_REDUNDANT_HEADERS, Relion
 from ..utils.generic import ParseError, guess_name_vec
 
 
@@ -18,7 +18,6 @@ def construct_poseset(
     star_path,
     rescale_shifts=False,
     name_regex=None,
-    guess_id=True,
 ):
     coords = np.asarray(df.get(coord_headers, 0), dtype=float)
     ndim = len(coord_headers)
@@ -48,12 +47,13 @@ def construct_poseset(
     # we want the inverse, which when applied to basis vectors it gives us the particle orientation
     rot = rot.inv()
 
-    features = df.drop(columns=Relion.REDUNDANT_HEADERS, errors="ignore")
+    exp_id = df.get(
+        PSDL.EXPERIMENT_ID, guess_name_vec(df.get(exp_header, None), name_regex)
+    ).astype(str)
 
-    exp_id = None if exp_header is None else df.get(exp_header, None)
-
-    if guess_id:
-        exp_id = guess_name_vec(exp_id, name_regex)
+    features = df.drop(
+        columns=Relion.REDUNDANT_HEADERS + POSESET_REDUNDANT_HEADERS, errors="ignore"
+    )
 
     data = pd.DataFrame()
     data[PSDL.POSITION[:ndim]] = coords
@@ -71,7 +71,6 @@ def parse_relion_star(
     df,
     star_path="",
     name_regex=None,
-    guess_id=True,
     **kwargs,
 ):
     # find out which columns are present and which version we're dealing with
@@ -113,7 +112,6 @@ def parse_relion_star(
         star_path,
         rescale_shifts=rescale_shifts,
         name_regex=name_regex,
-        guess_id=guess_id,
     )
 
 

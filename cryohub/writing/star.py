@@ -7,6 +7,32 @@ from scipy.spatial.transform import Rotation
 from ..utils.constants import POSESET_REDUNDANT_HEADERS, Relion
 
 
+def extract_optics(df):
+    optics_headers = [
+        h for h in Relion.POSSIBLE_OPTICS_GROUP_HEADERS if h in df.columns
+    ]
+    if Relion.OPTICS_GROUP_HEADER in df.columns:
+        optic_groups = (
+            df.get([Relion.OPTICS_GROUP_HEADER] + optics_headers)
+            .drop_duplicates()
+            .reset_index(drop=True)
+        )
+    else:
+        if optics_headers:
+            optic_groups = (
+                df.get(optics_headers).drop_duplicates().reset_index(drop=True)
+            ).index
+            df[Relion.OPTICS_GROUP_HEADER] = optic_groups
+        else:
+            # needed because drop_duplicates on empty dataframe does nothing
+            optic_groups = pd.DataFrame({Relion.OPTICS_GROUP_HEADER: [0]})
+            df[Relion.OPTICS_GROUP_HEADER] = 0
+
+    df = df.drop(columns=optics_headers, errors="ignore")
+    data = {"optics": optic_groups, "particles": df}
+    return data
+
+
 def write_star(particles, file_path, version="4.0", overwrite=False):
     """
     write particle data to disk as a .star file
@@ -39,17 +65,8 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
     df = pd.concat([df, features], axis=1)
 
     # split out optics group if present (and version > 3.0)
-    if version != "3.0" and Relion.OPTICS_GROUP_HEADER in particles.columns:
-        optics_headers = [
-            h for h in Relion.POSSIBLE_OPTICS_GROUP_HEADERS if h in particles.columns
-        ]
-        optics = (
-            df.get([Relion.OPTICS_GROUP_HEADER] + optics_headers)
-            .drop_duplicates()
-            .reset_index(drop=True)
-        )
-        particles = df.drop(columns=optics_headers, errors="ignore")
-        data = {"optics": optics, "particles": particles}
+    if version != "3.0":
+        data = extract_optics(df)
     else:
         data = df
 
