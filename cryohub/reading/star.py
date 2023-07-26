@@ -67,6 +67,12 @@ def construct_poseset(
     return validate_poseset_dataframe(data, coerce=True)
 
 
+def merge_optics(data_dict):
+    return data_dict["particles"].merge(
+        data_dict["optics"], on=Relion.OPTICS_GROUP_HEADER
+    )
+
+
 def parse_relion_star(
     df,
     star_path="",
@@ -126,9 +132,7 @@ def read_star(star_path, **kwargs):
     if len(raw_data) == 1:
         df = list(raw_data.values())[0]
     elif "particles" in raw_data and "optics" in raw_data:
-        df = raw_data["particles"].merge(
-            raw_data["optics"], on=Relion.OPTICS_GROUP_HEADER
-        )
+        df = merge_optics(raw_data)
     else:
         raise ParseError(
             f"Failed to parse {star_path} as particles. Are you sure this is a particle file?"

@@ -19,12 +19,14 @@ def extract_optics(df):
         )
     else:
         if optics_headers:
+            df[Relion.OPTICS_GROUP_HEADER] = df.groupby(optics_headers).ngroup()
             optic_groups = (
-                df.get(optics_headers).drop_duplicates().reset_index(drop=True)
-            ).index
-            df[Relion.OPTICS_GROUP_HEADER] = optic_groups
+                df.get([Relion.OPTICS_GROUP_HEADER, *optics_headers])
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
         else:
-            # needed because drop_duplicates on empty dataframe does nothing
+            # needed because grouby needs at least a column
             optic_groups = pd.DataFrame({Relion.OPTICS_GROUP_HEADER: [0]})
             df[Relion.OPTICS_GROUP_HEADER] = 0
 
