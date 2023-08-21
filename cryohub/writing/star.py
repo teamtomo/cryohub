@@ -5,34 +5,7 @@ from cryotypes.poseset import PoseSetDataLabels as PSDL
 from scipy.spatial.transform import Rotation
 
 from ..utils.constants import POSESET_REDUNDANT_HEADERS, Relion
-
-
-def extract_optics(df):
-    optics_headers = [
-        h for h in Relion.POSSIBLE_OPTICS_GROUP_HEADERS if h in df.columns
-    ]
-    if Relion.OPTICS_GROUP_HEADER in df.columns:
-        optic_groups = (
-            df.get([Relion.OPTICS_GROUP_HEADER] + optics_headers)
-            .drop_duplicates()
-            .reset_index(drop=True)
-        )
-    else:
-        if optics_headers:
-            df[Relion.OPTICS_GROUP_HEADER] = df.groupby(optics_headers).ngroup()
-            optic_groups = (
-                df.get([Relion.OPTICS_GROUP_HEADER, *optics_headers])
-                .drop_duplicates()
-                .reset_index(drop=True)
-            )
-        else:
-            # needed because grouby needs at least a column
-            optic_groups = pd.DataFrame({Relion.OPTICS_GROUP_HEADER: [0]})
-            df[Relion.OPTICS_GROUP_HEADER] = 0
-
-    df = df.drop(columns=optics_headers, errors="ignore")
-    data = {"optics": optic_groups, "particles": df}
-    return data
+from ..utils.star import extract_optics
 
 
 def write_star(particles, file_path, version="4.0", overwrite=False):

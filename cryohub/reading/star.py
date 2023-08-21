@@ -7,6 +7,14 @@ from scipy.spatial.transform import Rotation
 
 from ..utils.constants import POSESET_REDUNDANT_HEADERS, Relion
 from ..utils.generic import ParseError, guess_name_vec
+from ..utils.star import merge_optics
+
+
+def get_columns_or_default(df, columns, default=0):
+    cols = {}
+    for col in columns:
+        cols[col] = df.get(col, default)
+    return np.asarray(pd.DataFrame(cols, index=df.index), dtype=float)
 
 
 def construct_poseset(
@@ -19,9 +27,8 @@ def construct_poseset(
     rescale_shifts=False,
     name_regex=None,
 ):
-    coords = np.asarray(df.get(coord_headers, 0), dtype=float)
-    ndim = len(coord_headers)
-    shifts = np.asarray(df.get(shift_headers, 0), dtype=float)
+    coords = get_columns_or_default(df, coord_headers)
+    shifts = get_columns_or_default(df, shift_headers)
 
     pixel_size = df.get(pixel_size_headers, None)
     if pixel_size is not None:
@@ -35,12 +42,12 @@ def construct_poseset(
             "pixel size information is missing, but it is required because shifts are in Angstroms!"
         )
 
+    eulers = get_columns_or_default(df, Relion.EULER_HEADERS)
     if Relion.EULER_HEADERS[0] in df.columns:
         euler_convention = Relion.EULER
-        eulers = np.asarray(df.get(Relion.EULER_HEADERS, 0), dtype=float)
     else:
         euler_convention = Relion.INPLANE
-        eulers = np.asarray(df.get(Relion.EULER_HEADERS[2], 0), dtype=float)
+        eulers = eulers[:, 2]
 
     rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
 
@@ -56,8 +63,8 @@ def construct_poseset(
     )
 
     data = pd.DataFrame()
-    data[PSDL.POSITION[:ndim]] = coords
-    data[PSDL.SHIFT[:ndim]] = -shifts  # relion subtracts from coords
+    data[PSDL.POSITION] = coords
+    data[PSDL.SHIFT] = -shifts  # relion subtracts from coords
     data[PSDL.ORIENTATION] = np.asarray(rot)
     data[PSDL.PIXEL_SPACING] = pixel_size or 0
     data[PSDL.EXPERIMENT_ID] = exp_id
@@ -67,10 +74,14 @@ def construct_poseset(
     return validate_poseset_dataframe(data, coerce=True)
 
 
-def merge_optics(data_dict):
-    return data_dict["particles"].merge(
-        data_dict["optics"], on=Relion.OPTICS_GROUP_HEADER
-    )
+def get_proper_header_version(df, header_dict):
+    for headers in header_dict.values():
+        if isinstance(headers, str):
+            if headers in df.columns:
+                return headers
+        elif any(col in df.columns for col in headers):
+            return headers
+    return None
 
 
 def parse_relion_star(
@@ -82,31 +93,23 @@ def parse_relion_star(
     # find out which columns are present and which version we're dealing with
     rescale_shifts = True
 
-    if Relion.PIXEL_SIZE_HEADER["3.1"] in df.columns:
-        # 3.1 has priority over 4 (cause it's still used in 4 for single particle)
-        version = "3.1"
-    elif Relion.PIXEL_SIZE_HEADER["4.0"] in df.columns:
-        version = "4.0"
-    else:
-        # also includes if this is not present (required for later versions!)
-        version = "3.0"
+    pixel_size_headers = (
+        get_proper_header_version(df, Relion.PIXEL_SIZE_HEADER)
+        or Relion.PIXEL_SIZE_HEADER["3.0"]
+    )
+    if pixel_size_headers == Relion.PIXEL_SIZE_HEADER["3.0"]:
         rescale_shifts = False
 
-    pixel_size_headers = Relion.PIXEL_SIZE_HEADER[version]
-    shift_headers = Relion.SHIFT_HEADERS[version]
+    shift_headers = get_proper_header_version(df, Relion.SHIFT_HEADERS)
 
     if (
         Relion.COORD_HEADERS[0] not in df.columns
         or Relion.COORD_HEADERS[1] not in df.columns
     ):
         raise ParseError("coordinate information missing")
-    elif Relion.COORD_HEADERS[-1] in df.columns:
-        coord_headers = Relion.COORD_HEADERS
-    else:
-        coord_headers = Relion.COORD_HEADERS[:2]
-        shift_headers = shift_headers[:2]
 
-    exp_header = Relion.MICROGRAPH_NAME_HEADER[version]
+    coord_headers = Relion.COORD_HEADERS
+    exp_header = get_proper_header_version(df, Relion.MICROGRAPH_NAME_HEADER)
 
     # start parsing
     return construct_poseset(
