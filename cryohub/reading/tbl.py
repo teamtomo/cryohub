@@ -9,16 +9,15 @@ from ..utils.constants import Dynamo
 from ..utils.generic import guess_name_vec
 
 
-def read_tbl(table_path, table_map_file=None, guess_id=True, name_regex=None, **kwargs):
+def read_tbl(table_path, table_map_file=None, name_regex=None, **kwargs):
     """
     Read particles from a dynamo format table file
     """
     df = dynamotable.read(table_path, table_map_file)
 
     if Dynamo.EXP_NAME_HEADER in df.columns:
-        exp_id = df[Dynamo.EXP_NAME_HEADER]
-        if guess_id:
-            exp_id = guess_name_vec(exp_id, name_regex)
+        exp_id = df.get(Dynamo.EXP_NAME_HEADER)
+        exp_id = guess_name_vec(exp_id, name_regex)
     else:
         exp_id = df[Dynamo.EXP_ID_HEADER].astype(str)
 

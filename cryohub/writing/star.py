@@ -5,6 +5,7 @@ from cryotypes.poseset import PoseSetDataLabels as PSDL
 from scipy.spatial.transform import Rotation
 
 from ..utils.constants import POSESET_REDUNDANT_HEADERS, Relion
+from ..utils.star import extract_optics
 
 
 def write_star(particles, file_path, version="4.0", overwrite=False):
@@ -33,23 +34,14 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
         df[Relion.EULER_HEADERS[2]] = eulers[:, 0]
     else:
         df[Relion.EULER_HEADERS] = eulers
-    df[Relion.MICROGRAPH_NAME_HEADER[version]] = particles[PSDL.EXPERIMENT_ID]
+    df[PSDL.EXPERIMENT_ID] = particles[PSDL.EXPERIMENT_ID]
 
     features = particles.drop(columns=POSESET_REDUNDANT_HEADERS, errors="ignore")
     df = pd.concat([df, features], axis=1)
 
     # split out optics group if present (and version > 3.0)
-    if version != "3.0" and Relion.OPTICS_GROUP_HEADER in particles.columns:
-        optics_headers = [
-            h for h in Relion.POSSIBLE_OPTICS_GROUP_HEADERS if h in particles.columns
-        ]
-        optics = (
-            df.get([Relion.OPTICS_GROUP_HEADER] + optics_headers)
-            .drop_duplicates()
-            .reset_index(drop=True)
-        )
-        particles = df.drop(columns=optics_headers, errors="ignore")
-        data = {"optics": optics, "particles": particles}
+    if version != "3.0":
+        data = extract_optics(df)
     else:
         data = df
 

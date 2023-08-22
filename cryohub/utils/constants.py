@@ -10,23 +10,25 @@ POSESET_REDUNDANT_HEADERS = [
 ]
 
 
+# note: order in dicts matters (early entries are checked first,
+# so better to check new versions first)
 class Relion:
     COORD_HEADERS = [f"rlnCoordinate{axis}" for axis in "XYZ"]
     EULER_HEADERS = [f"rlnAngle{angle}" for angle in ["Rot", "Tilt", "Psi"]]
     SHIFT_HEADERS = {
-        "3.0": [f"rlnOrigin{axis}" for axis in "XYZ"],
-        "3.1": [f"rlnOrigin{axis}Angst" for axis in "XYZ"],
         "4.0": [f"rlnOrigin{axis}Angst" for axis in "XYZ"],
+        "3.1": [f"rlnOrigin{axis}Angst" for axis in "XYZ"],
+        "3.0": [f"rlnOrigin{axis}" for axis in "XYZ"],
     }
     PIXEL_SIZE_HEADER = {
-        "3.0": "rlnDetectorPixelSize",
-        "3.1": "rlnImagePixelSize",
         "4.0": "rlnTomoTiltSeriesPixelSize",
+        "3.1": "rlnImagePixelSize",
+        "3.0": "rlnDetectorPixelSize",
     }
     MICROGRAPH_NAME_HEADER = {
-        "3.0": "rlnMicrographName",
-        "3.1": "rlnMicrographName",
         "4.0": "rlnTomoName",
+        "3.1": "rlnMicrographName",
+        "3.0": "rlnMicrographName",
     }
     OPTICS_GROUP_HEADER = "rlnOpticsGroup"
     POSSIBLE_OPTICS_GROUP_HEADERS = [
@@ -52,9 +54,6 @@ class Relion:
             PIXEL_SIZE_HEADER["3.0"],
             PIXEL_SIZE_HEADER["3.1"],
             PIXEL_SIZE_HEADER["4.0"],
-            MICROGRAPH_NAME_HEADER["3.0"],
-            MICROGRAPH_NAME_HEADER["3.1"],
-            MICROGRAPH_NAME_HEADER["4.0"],
         ]
     )
 
