@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
+import pandas as pd
 from cryotypes.image import ImageProtocol
-from cryotypes.poseset import PoseSet
+from cryotypes.poseset import PoseSetProtocol
 
 
 class ParseError(RuntimeError):
@@ -39,11 +40,6 @@ def guess_name(string, name_regex=None):
         return ""
 
 
-@np.vectorize
-def guess_name_vec(string, reg=None):
-    return guess_name(string, reg)
-
-
 def pad_to_3D(arr):
     if arr.shape[-1] == 2:
         arr = np.pad(arr, ((0, 0), (0, 1)))
@@ -55,10 +51,32 @@ def listify(obj):
     transform input into an appropriate list, unless already list-like
     """
     if isinstance(obj, Iterable):
-        if isinstance(obj, (str, Path, PoseSet, ImageProtocol)):
+        if isinstance(obj, (str, Path, PoseSetProtocol, ImageProtocol)):
             return [obj]
         else:
             return list(obj)
     if obj is None:
         return []
     return [obj]
+
+
+def get_columns_or_default(df, columns, default=0):
+    """
+    Get columns from a dataframe as a numpy array, if present.
+
+    If only some columns are present, fill them with the default value.
+    If none are present, return None.
+    """
+    if columns is None:
+        return None
+    if isinstance(columns, str):
+        columns = [columns]
+
+    cols = {}
+    for col in columns:
+        cols[col] = df.get(col, default)
+
+    if not any(isinstance(col, pd.Series) for col in cols.values()):
+        return None
+
+    return np.asarray(pd.DataFrame(cols, index=df.index))

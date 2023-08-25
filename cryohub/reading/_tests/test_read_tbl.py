@@ -1,14 +1,7 @@
 import dynamotable
-from cryotypes.poseset import PoseSetDataLabels as PSDL
 
 from cryohub.reading.tbl import read_tbl
-from cryohub.utils.testing import assert_dataframe_equal
-
-base_columns = [
-    *PSDL.POSITION,
-    *PSDL.SHIFT,
-    PSDL.ORIENTATION,
-]
+from cryohub.utils.testing import assert_dataclass_equal
 
 
 def test_read_tbl(tmp_path, dynamo_tbl, poseset):
@@ -17,4 +10,5 @@ def test_read_tbl(tmp_path, dynamo_tbl, poseset):
 
     part = read_tbl(file_path, name_regex=r"\w")
 
-    assert_dataframe_equal(part, poseset, columns=base_columns)
+    for p, p_exp in zip(part, poseset):
+        assert_dataclass_equal(p, p_exp)
