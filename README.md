@@ -4,25 +4,47 @@
 
 # Installation
 
-```
+```bash
 pip install cryohub
 ```
 
 # Usage
 
-`cryohub` provides granular I/O functions such as `read_star` and `read_mrc`, which will all return objects following the `cryotypes` specification. A higher level function called `read` adds some magic to the IO procedure, guessing file formats and returning a list of `cryotypes`.
+`cryohub` provides granular I/O functions such as `read_star` and `read_mrc`, which will all return objects following the `cryotypes` specification.
+
+```py
+from cryohub.reading import read_star
+poseset = read_star('/path/to/file.star')
+```
+
+A higher level function called `read` adds some magic to the IO procedure, guessing file formats and returning a list of `cryotypes`.
+
+```py
+from cryohub import read
+data = read('/path/to/file.star', '/path/to/directotry/', lazy=False, name_regex=r'tomo_\d+')
+```
+
+See the help for each function for more info.
 
 Similarly to the `read_*` functions, `cryohub` provides a series of `write_*` functions.
+
+```py
+from cryohub.writing import write_tbl
+write_tbl([poseset1, poseset2], 'particles.tbl')
+```
 
 
 ## From the command line
 
-If you just need to quickly inspect your data, this command will land in an ipython shell with the loaded data collected in a list called `data`:
+If you just need to quickly inspect your data but want something more powerful than just reading text files or headers, this command will land you in an ipython shell with the loaded data collected in a list called `data`:
 
 ```bash
 cryohub path/to/files/* /other/path/to/file.star
 ```
 
+```py
+print(data[0])
+```
 
 # Features
 
