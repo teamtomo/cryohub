@@ -1,17 +1,7 @@
 import starfile
-from cryotypes.poseset import PoseSetDataLabels as PSDL
 
 from cryohub.reading.star import read_star
-from cryohub.utils.testing import assert_dataframe_equal
-
-base_columns = [
-    *PSDL.POSITION,
-    *PSDL.SHIFT,
-    PSDL.ORIENTATION,
-    PSDL.EXPERIMENT_ID,
-    PSDL.PIXEL_SPACING,
-    "feature",
-]
+from cryohub.utils.testing import assert_dataclass_equal
 
 
 def test_read_relion30_3d(tmp_path, relion30_star, poseset):
@@ -20,7 +10,8 @@ def test_read_relion30_3d(tmp_path, relion30_star, poseset):
 
     part = read_star(file_path, name_regex=r"\w")
 
-    assert_dataframe_equal(part, poseset, columns=base_columns)
+    for p, p_exp in zip(part, poseset):
+        assert_dataclass_equal(p, p_exp)
 
 
 def test_read_relion31_3d(tmp_path, relion31_star, poseset):
@@ -29,7 +20,8 @@ def test_read_relion31_3d(tmp_path, relion31_star, poseset):
 
     part = read_star(file_path, name_regex=r"\w")
 
-    assert_dataframe_equal(part, poseset, columns=base_columns)
+    for p, p_exp in zip(part, poseset):
+        assert_dataclass_equal(p, p_exp)
 
 
 def test_read_relion40_3d(tmp_path, relion40_star, poseset):
@@ -38,7 +30,8 @@ def test_read_relion40_3d(tmp_path, relion40_star, poseset):
 
     part = read_star(file_path, name_regex=r"\w")
 
-    assert_dataframe_equal(part, poseset, columns=base_columns)
+    for p, p_exp in zip(part, poseset):
+        assert_dataclass_equal(p, p_exp)
 
 
 def test_read_relion40_2d(tmp_path, relion40_star2D, poseset2D):
@@ -47,14 +40,5 @@ def test_read_relion40_2d(tmp_path, relion40_star2D, poseset2D):
 
     part = read_star(file_path, name_regex=r"\w")
 
-    assert_dataframe_equal(
-        part,
-        poseset2D,
-        columns=[
-            *PSDL.POSITION[:2],
-            *PSDL.SHIFT[:2],
-            PSDL.ORIENTATION,
-            PSDL.EXPERIMENT_ID,
-            PSDL.PIXEL_SPACING,
-        ],
-    )
+    for p, p_exp in zip(part, poseset2D):
+        assert_dataclass_equal(p, p_exp)

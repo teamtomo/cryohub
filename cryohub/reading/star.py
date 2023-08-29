@@ -1,20 +1,13 @@
 import numpy as np
 import pandas as pd
 import starfile
-from cryotypes.poseset import PoseSetDataLabels as PSDL
-from cryotypes.poseset import validate_poseset_dataframe
+from cryotypes.poseset import validate_poseset
 from scipy.spatial.transform import Rotation
 
-from ..utils.constants import POSESET_REDUNDANT_HEADERS, Relion
-from ..utils.generic import ParseError, guess_name_vec
+from ..utils.constants import Relion
+from ..utils.generic import ParseError, get_columns_or_default, guess_name
 from ..utils.star import merge_optics
-
-
-def get_columns_or_default(df, columns, default=0):
-    cols = {}
-    for col in columns:
-        cols[col] = df.get(col, default)
-    return np.asarray(pd.DataFrame(cols, index=df.index), dtype=float)
+from ..utils.types import PoseSet
 
 
 def construct_poseset(
@@ -22,56 +15,58 @@ def construct_poseset(
     coord_headers,
     shift_headers,
     pixel_size_headers,
-    exp_header,
     star_path,
-    rescale_shifts=False,
+    exp_id,
+    rescale_shift=False,
     name_regex=None,
 ):
     coords = get_columns_or_default(df, coord_headers)
-    shifts = get_columns_or_default(df, shift_headers)
+    shift = get_columns_or_default(df, shift_headers)
+    # relion shift subtract from coordinates
+    if shift is not None:
+        shift = -shift
 
-    pixel_size = df.get(pixel_size_headers, None)
+    pixel_size = get_columns_or_default(df, pixel_size_headers)
     if pixel_size is not None:
         pixel_size = np.asarray(pixel_size, dtype=float)
         # XXX TODO: remove the following and support variable pixel sizes?
         pixel_size = pixel_size.ravel()[0]
-        if rescale_shifts:
-            shifts = shifts / pixel_size
-    elif rescale_shifts:
+        if rescale_shift and shift is not None:
+            shift = shift / pixel_size
+    elif rescale_shift:
         raise ParseError(
-            "pixel size information is missing, but it is required because shifts are in Angstroms!"
+            "pixel size information is missing, but it is required because shift are in Angstroms!"
         )
 
     eulers = get_columns_or_default(df, Relion.EULER_HEADERS)
-    if Relion.EULER_HEADERS[0] in df.columns:
-        euler_convention = Relion.EULER
+    if eulers is None or np.allclose(eulers, 0):
+        rot = None
     else:
-        euler_convention = Relion.INPLANE
-        eulers = eulers[:, 2]
+        if Relion.EULER_HEADERS[0] in df.columns:
+            euler_convention = Relion.EULER
+        else:
+            euler_convention = Relion.INPLANE
+            eulers = eulers[:, 2]
+        rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
 
-    rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
+        # we want the inverse, which when applied to basis vectors it gives us the particle orientation
+        rot = rot.inv()
 
-    # we want the inverse, which when applied to basis vectors it gives us the particle orientation
-    rot = rot.inv()
+    exp_id = guess_name(exp_id, name_regex)
 
-    exp_id = df.get(
-        PSDL.EXPERIMENT_ID, guess_name_vec(df.get(exp_header, None), name_regex)
-    ).astype(str)
+    features = df.drop(columns=Relion.REDUNDANT_HEADERS, errors="ignore")
 
-    features = df.drop(
-        columns=Relion.REDUNDANT_HEADERS + POSESET_REDUNDANT_HEADERS, errors="ignore"
+    poseset = PoseSet(
+        position=coords,
+        shift=shift,
+        orientation=rot,
+        pixel_spacing=pixel_size or 0,
+        experiment_id=exp_id,
+        source=star_path,
+        features=features,
     )
 
-    data = pd.DataFrame()
-    data[PSDL.POSITION] = coords
-    data[PSDL.SHIFT] = -shifts  # relion subtracts from coords
-    data[PSDL.ORIENTATION] = np.asarray(rot)
-    data[PSDL.PIXEL_SPACING] = pixel_size or 0
-    data[PSDL.EXPERIMENT_ID] = exp_id
-    data[PSDL.SOURCE] = star_path
-    data = pd.concat([data, features], axis=1)
-
-    return validate_poseset_dataframe(data, coerce=True)
+    return validate_poseset(poseset, coerce=True)
 
 
 def get_proper_header_version(df, header_dict):
@@ -91,14 +86,14 @@ def parse_relion_star(
     **kwargs,
 ):
     # find out which columns are present and which version we're dealing with
-    rescale_shifts = True
+    rescale_shift = True
 
     pixel_size_headers = (
         get_proper_header_version(df, Relion.PIXEL_SIZE_HEADER)
         or Relion.PIXEL_SIZE_HEADER["3.0"]
     )
     if pixel_size_headers == Relion.PIXEL_SIZE_HEADER["3.0"]:
-        rescale_shifts = False
+        rescale_shift = False
 
     shift_headers = get_proper_header_version(df, Relion.SHIFT_HEADERS)
 
@@ -111,17 +106,24 @@ def parse_relion_star(
     coord_headers = Relion.COORD_HEADERS
     exp_header = get_proper_header_version(df, Relion.MICROGRAPH_NAME_HEADER)
 
-    # start parsing
-    return construct_poseset(
-        df,
-        coord_headers,
-        shift_headers,
-        pixel_size_headers,
-        exp_header,
-        star_path,
-        rescale_shifts=rescale_shifts,
-        name_regex=name_regex,
-    )
+    if exp_header is None:
+        groups_by_exp = [(None, df)]
+    else:
+        groups_by_exp = df.groupby(exp_header)
+
+    return [
+        construct_poseset(
+            exp_df.reset_index(drop=True),
+            coord_headers=coord_headers,
+            shift_headers=shift_headers,
+            pixel_size_headers=pixel_size_headers,
+            star_path=star_path,
+            exp_id=exp_id,
+            rescale_shift=rescale_shift,
+            name_regex=name_regex,
+        )
+        for exp_id, exp_df in groups_by_exp
+    ]
 
 
 def read_star(star_path, **kwargs):

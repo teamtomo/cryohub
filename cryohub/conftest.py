@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from cryotypes.image import Image
-from cryotypes.poseset import PoseSetDataLabels as PSDL
-from cryotypes.poseset import validate_poseset_dataframe
 from scipy.spatial.transform import Rotation
+
+from .utils.types import PoseSet
 
 # some real use case
 _angles_relion = np.array(
@@ -18,45 +18,47 @@ _angles_dynamo = _rotations.inv().as_euler("zxz", degrees=True)
 
 @pytest.fixture
 def poseset():
-    return validate_poseset_dataframe(
-        pd.DataFrame(
-            {
-                PSDL.POSITION_X: [1, 1],
-                PSDL.POSITION_Y: [2, 2],
-                PSDL.POSITION_Z: [3, 3],
-                PSDL.SHIFT_X: [0.01, 0.01],
-                PSDL.SHIFT_Y: [0.02, 0.02],
-                PSDL.SHIFT_Z: [0.03, 0.03],
-                PSDL.ORIENTATION: np.asarray(_rotations),
-                PSDL.EXPERIMENT_ID: ["a", "b"],
-                PSDL.PIXEL_SPACING: [10, 10],
-                PSDL.SOURCE: "test.star",
-                "feature": ["x", "y"],
-            }
+    return (
+        PoseSet(
+            position=np.array([[1, 2, 3]]),
+            shift=np.array([[0.01, 0.02, 0.03]]),
+            orientation=_rotations[:1],
+            experiment_id="a",
+            pixel_spacing=10,
+            source="test.star",
+            features=pd.DataFrame({"feature": ["x"]}),
         ),
-        coerce=True,
+        PoseSet(
+            position=np.array([[1, 2, 3]]),
+            shift=np.array([[0.01, 0.02, 0.03]]),
+            orientation=_rotations[1:],
+            experiment_id="b",
+            pixel_spacing=10,
+            source="test.star",
+            features=pd.DataFrame({"feature": ["y"]}),
+        ),
     )
 
 
 @pytest.fixture
 def poseset2D():
-    return validate_poseset_dataframe(
-        pd.DataFrame(
-            {
-                PSDL.POSITION_X: [1, 1],
-                PSDL.POSITION_Y: [2, 2],
-                PSDL.SHIFT_X: [0.01, 0.01],
-                PSDL.SHIFT_Y: [0.02, 0.02],
-                PSDL.ORIENTATION: np.asarray(
-                    Rotation.from_euler("Z", [60, 45], degrees=True).inv()
-                ),
-                PSDL.EXPERIMENT_ID: ["a", "b"],
-                PSDL.PIXEL_SPACING: [10, 10],
-                PSDL.SOURCE: "test.star",
-            }
+    return (
+        PoseSet(
+            position=np.array([[1, 2, 0]]),
+            shift=np.array([[0.01, 0.02, 0]]),
+            orientation=Rotation.from_euler("Z", [60], degrees=True).inv(),
+            experiment_id="a",
+            pixel_spacing=10,
+            source="test.star",
         ),
-        ndim=2,
-        coerce=True,
+        PoseSet(
+            position=np.array([[1, 2, 0]]),
+            shift=np.array([[0.01, 0.02, 0]]),
+            orientation=Rotation.from_euler("Z", [45], degrees=True).inv(),
+            experiment_id="b",
+            pixel_spacing=10,
+            source="test.star",
+        ),
     )
 
 

@@ -1,12 +1,11 @@
 import dynamotable
 import numpy as np
-import pandas as pd
-from cryotypes.poseset import PoseSetDataLabels as PSDL
-from cryotypes.poseset import validate_poseset_dataframe
+from cryotypes.poseset import validate_poseset
 from scipy.spatial.transform import Rotation
 
 from ..utils.constants import Dynamo
-from ..utils.generic import guess_name_vec
+from ..utils.generic import get_columns_or_default
+from ..utils.types import PoseSet
 
 
 def read_tbl(table_path, table_map_file=None, name_regex=None, **kwargs):
@@ -15,37 +14,42 @@ def read_tbl(table_path, table_map_file=None, name_regex=None, **kwargs):
     """
     df = dynamotable.read(table_path, table_map_file)
 
-    if Dynamo.EXP_NAME_HEADER in df.columns:
-        exp_id = df.get(Dynamo.EXP_NAME_HEADER)
-        exp_id = guess_name_vec(exp_id, name_regex)
+    if Dynamo.EXP_NAME_HEADER is df.columns:
+        groups_by_exp = [(None, df)]
     else:
-        exp_id = df[Dynamo.EXP_ID_HEADER].astype(str)
+        groups_by_exp = df.groupby(Dynamo.EXP_ID_HEADER)
 
-    if Dynamo.COORD_HEADERS[-1] in df.columns:
-        ndim = 3
-    else:
-        ndim = 2
+    posesets = []
+    for exp_id, exp_df in groups_by_exp:
+        exp_df = exp_df.reset_index(drop=True)
+        coords = get_columns_or_default(exp_df, Dynamo.COORD_HEADERS)
+        shifts = get_columns_or_default(exp_df, Dynamo.SHIFT_HEADERS)
+        eulers = get_columns_or_default(exp_df, Dynamo.EULER_HEADERS[3])
 
-    coords = np.asarray(df[Dynamo.COORD_HEADERS[:ndim]], dtype=float)
-    shifts = np.asarray(df.get(Dynamo.SHIFT_HEADERS[:ndim], 0), dtype=float)
-    eulers = np.asarray(df.get(Dynamo.EULER_HEADERS[ndim], 0), dtype=float)
+        if eulers is None or np.allclose(eulers, 0):
+            rot = None
+        else:
+            if all(header in exp_df.columns for header in Dynamo.EULER_HEADERS[3]):
+                euler_convention = Dynamo.EULER
+            else:
+                euler_convention = Dynamo.INPLANE
+                eulers = eulers[:, Dynamo.EULER_HEADERS[2]]
+            rot = Rotation.from_euler(euler_convention, eulers, degrees=True)
 
-    if ndim == 3:
-        rot = Rotation.from_euler(Dynamo.EULER, eulers, degrees=True)
-    else:
-        rot = Rotation.from_euler(Dynamo.INPLANE, eulers, degrees=True)
+            # we want the inverse, which when applied to basis vectors it gives us the particle orientation
+            rot = rot.inv()
 
-    # we want the inverse, which when applied to basis vectors it gives us the particle orientation
-    rot = rot.inv()
+        features = exp_df.drop(columns=Dynamo.REDUNDANT_HEADERS, errors="ignore")
 
-    features = df.drop(columns=Dynamo.REDUNDANT_HEADERS, errors="ignore")
+        poseset = PoseSet(
+            position=coords,
+            shift=shifts,
+            orientation=rot,
+            experiment_id=exp_id,
+            source=table_path,
+            features=features,
+        )
 
-    data = pd.DataFrame()
-    data[PSDL.POSITION[:ndim]] = coords
-    data[PSDL.SHIFT[:ndim]] = shifts
-    data[PSDL.ORIENTATION] = np.asarray(rot)
-    data[PSDL.EXPERIMENT_ID] = exp_id
-    data[PSDL.SOURCE] = table_path
-    data = pd.concat([data, features], axis=1)
+        posesets.append(validate_poseset(poseset, coerce=True))
 
-    return validate_poseset_dataframe(data, coerce=True)
+    return posesets

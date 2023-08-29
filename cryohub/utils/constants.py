@@ -1,15 +1,3 @@
-from cryotypes.poseset import PoseSetDataLabels as PSDL
-
-POSESET_REDUNDANT_HEADERS = [
-    *PSDL.POSITION,
-    *PSDL.SHIFT,
-    PSDL.ORIENTATION,
-    PSDL.EXPERIMENT_ID,
-    PSDL.PIXEL_SPACING,
-    PSDL.SOURCE,
-]
-
-
 # note: order in dicts matters (early entries are checked first,
 # so better to check new versions first)
 class Relion:

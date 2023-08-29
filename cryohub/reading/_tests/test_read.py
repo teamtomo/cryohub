@@ -16,4 +16,4 @@ def test_read_path(tmp_path, image_stack, volume, relion40_star):
 
     data = read(tmp_path, name_regex=r"test\d")
 
-    assert len(data) == 3
+    assert len(data) == 4  # 2 imgs and 2 posesets
