@@ -14,9 +14,10 @@ class ParseError(RuntimeError):
 
 # a list of commonly used base names for paths in regex form
 common_name_regexes = (
-    r"^\w+\d+",
-    r"^\w+_\d+",
-    r"\d+",
+    r"^(\w+\d+).*\.",
+    r"^(\w+_\d+).*\.",
+    r"^(.*\d+).*\.",
+    r"^(.*?)\.",
 )
 
 
@@ -26,7 +27,7 @@ def guess_name(string, name_regex=None):
     and a list of regexes in order of priority
     """
     if string is None:
-        return ""
+        return "NO_ID"
     string = Path(string).stem
     name_regex = listify(name_regex)
     regexes = list(common_name_regexes)
@@ -37,7 +38,7 @@ def guess_name(string, name_regex=None):
                 return match.group(1)
             return match.group(0)
     else:
-        return ""
+        return "NO_ID"
 
 
 def pad_to_3D(arr):
