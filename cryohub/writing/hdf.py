@@ -1,12 +1,22 @@
+from pathlib import Path
+
 import h5py
+
+from ..utils.generic import WriteError, listify
 
 
 def write_hdf(image, file_path, overwrite=False):
     """
     write an image to disk as an .hdf file
     """
-    if not file_path.endswith(".hdf"):
-        file_path = file_path + ".hdf"
+    image = listify(image)
+    file_path = Path(file_path)
+    if len(image) != 1:
+        raise WriteError("Cannot write multiple images to the same path.")
+    image = image[0]
+
+    if not file_path.suffix:
+        file_path = file_path.with_suffix(".hdf")
 
     mode = "w" if overwrite else "x"
 

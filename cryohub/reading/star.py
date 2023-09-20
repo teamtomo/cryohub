@@ -105,6 +105,9 @@ def parse_relion_star(
 
     coord_headers = Relion.COORD_HEADERS
     exp_header = get_proper_header_version(df, Relion.MICROGRAPH_NAME_HEADER)
+    # maybe it has experiment_id column from previous write
+    if exp_header is None:
+        exp_header = "experiment_id" if "experiment_id" in df.columns else None
 
     if exp_header is None:
         groups_by_exp = [(None, df)]

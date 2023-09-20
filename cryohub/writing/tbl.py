@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import dynamotable
 import numpy as np
 import pandas as pd
@@ -11,6 +13,7 @@ def write_tbl(particles, file_path):
     write particle data to disk as a dynamo .tbl file
     """
     particles = listify(particles)
+    file_path = Path(file_path)
 
     dataframes = []
     for poseset in particles:
@@ -53,6 +56,6 @@ def write_tbl(particles, file_path):
 
     df = pd.concat(dataframes)
 
-    if not str(file_path).endswith(".tbl"):
-        file_path = str(file_path) + ".tbl"
+    if not file_path.suffix:
+        file_path = file_path.with_suffix(".tbl")
     dynamotable.write(df, file_path)

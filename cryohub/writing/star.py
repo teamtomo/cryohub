@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import starfile
@@ -12,6 +14,7 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
     write particle data to disk as a .star file
     """
     particles = listify(particles)
+    file_path = Path(file_path)
 
     dataframes = []
     for poseset in particles:
@@ -66,7 +69,7 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
     else:
         data = df
 
-    if not str(file_path).endswith(".star"):
-        file_path = str(file_path) + ".star"
+    if not file_path.suffix:
+        file_path = file_path.with_suffix(".star")
 
     starfile.write(data, file_path, overwrite=overwrite)

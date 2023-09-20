@@ -1,5 +1,9 @@
+from pathlib import Path
+
 import mrcfile
 import numpy as np
+
+from ..utils.generic import WriteError, listify
 
 
 def _ensure_valid_dtype(data):
@@ -23,8 +27,14 @@ def write_mrc(image, file_path, overwrite=False):
     """
     write an image to disk as an .mrc file
     """
-    if not file_path.endswith(".mrc"):
-        file_path = file_path + ".mrc"
+    image = listify(image)
+    file_path = Path(file_path)
+    if len(image) != 1:
+        raise WriteError("Cannot write multiple images to the same path.")
+    image = image[0]
+
+    if not file_path.suffix:
+        file_path = file_path.with_suffix(".mrc")
 
     mrc = mrcfile.new(file_path, _ensure_valid_dtype(image.data), overwrite=overwrite)
     mrc.set_image_stack() if image.stack else mrc.set_volume()

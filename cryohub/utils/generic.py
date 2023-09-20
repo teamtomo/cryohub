@@ -12,12 +12,17 @@ class ParseError(RuntimeError):
     pass
 
 
+class WriteError(RuntimeError):
+    pass
+
+
 # a list of commonly used base names for paths in regex form
 common_name_regexes = (
     r"^(\w+\d+).*\.",
     r"^(\w+_\d+).*\.",
     r"^(.*\d+).*\.",
     r"^(.*?)\.",
+    r"^\w+",
 )
 
 
