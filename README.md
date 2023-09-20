@@ -26,20 +26,26 @@ data = read('/path/to/file.star', '/path/to/directotry/', lazy=False, name_regex
 
 See the help for each function for more info.
 
-Similarly to the `read_*` functions, `cryohub` provides a series of `write_*` functions.
+Similarly to the `read_*` functions, `cryohub` provides a series of `write_*` functions, and a magic higher level `write` funtion.
 
 ```py
-from cryohub.writing import write_tbl
-write_tbl([poseset1, poseset2], 'particles.tbl')
+from cryohub import write
+write([poseset1, poseset2], 'particles.tbl')
 ```
 
 
 ## From the command line
 
-If you just need to quickly inspect your data but want something more powerful than just reading text files or headers, this command will land you in an ipython shell with the loaded data collected in a list called `data`:
+`cryohub` can be used as a conversion tool between all available formats:
 
 ```bash
-cryohub path/to/files/* /other/path/to/file.star
+cryohub convert input_file.star output_file.tbl
+```
+
+If instead you just need to quickly inspect your data but want something more powerful than just reading text files or headers, this command will land you in an ipython shell with the loaded data collected in a list called `data`:
+
+```bash
+cryohub view path/to/files/* /other/path/to/file.star
 ```
 
 ```py
@@ -49,7 +55,7 @@ print(data[0])
 # Features
 
 Currently `cryohub` is capable of reading images in the following formats:
-- `.mrc` (and the `.mrcs` or `.st` variants)
+- `.mrc` (and the `.mrcs`, `.st`, `.map` variants)
 - Dynamo `.em`
 - EMAN2 `.hdf`
 
