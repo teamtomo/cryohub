@@ -24,7 +24,7 @@ def read_mrc(image_path, name_regex=None, lazy=True, **kwargs):
 
         stack = mrc.is_image_stack() or mrc.is_volume_stack()
 
-    tomo = Image(
+    img = Image(
         data=data,
         experiment_id=name,
         pixel_spacing=pixel_size,
@@ -32,4 +32,4 @@ def read_mrc(image_path, name_regex=None, lazy=True, **kwargs):
         stack=stack,
     )
 
-    return validate_image(tomo, coerce=True)
+    return validate_image(img, coerce=True)

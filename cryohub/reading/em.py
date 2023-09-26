@@ -21,7 +21,7 @@ def read_em(image_path, name_regex=None, lazy=True, **kwargs):
 
     pixel_size = header["OBJ"] or 0
 
-    tomo = Image(
+    img = Image(
         data=data,
         experiment_id=name,
         pixel_spacing=pixel_size,
@@ -29,4 +29,4 @@ def read_em(image_path, name_regex=None, lazy=True, **kwargs):
         stack=False,
     )
 
-    return validate_image(tomo, coerce=True)
+    return validate_image(img, coerce=True)

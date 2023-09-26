@@ -17,7 +17,7 @@ def read_hdf(image_path, name_regex=None, **kwargs):
         img = hdf["MDF"]["images"]["0"]["image"]
         data = np.asarray(img)
 
-    tomo = Image(
+    img = Image(
         data=data,
         experiment_id=name,
         pixel_spacing=None or 0,
@@ -25,4 +25,4 @@ def read_hdf(image_path, name_regex=None, **kwargs):
         stack=False,
     )
 
-    return validate_image(tomo, coerce=True)
+    return validate_image(img, coerce=True)

@@ -8,19 +8,24 @@ from .hdf import read_hdf
 from .mrc import read_mrc
 from .star import read_star
 from .tbl import read_tbl
+from .tif import read_tif
 
 # a mapping of file extensions to readers, tuple map to tuples (don't forget trailing comma!):
 #   - multiple extensions values in the keys use the same readers
 #   - multiple readers are called in order from highest to lowers in case previous ones fail
 # TODO: put this directly in the readers to make it plug and play?
 readers = {
-    (".star",): (read_star,),
-    (".mrc", ".mrcs", ".st", ".map"): (read_mrc,),
-    (".hdf",): (read_hdf,),
-    (".em",): (read_em,),
-    (".tbl",): (read_tbl,),
     (".box",): (read_box,),
     (".cbox",): (read_cbox,),
+    (".em",): (read_em,),
+    (".hdf",): (read_hdf,),
+    (".mrc", ".mrcs", ".st", ".map"): (read_mrc,),
+    (".star",): (read_star,),
+    (".tbl",): (read_tbl,),
+    (
+        ".tif",
+        ".tiff",
+    ): (read_tif,),
 }
 
 known_formats = [ext for formats in readers for ext in formats]
