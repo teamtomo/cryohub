@@ -5,22 +5,23 @@ from cryotypes.image import Image, validate_image
 from ..utils.generic import guess_name
 
 
-# TODO: lazy mode
-def read_hdf(image_path, name_regex=None, **kwargs):
+def read_eman2_hdf(image_path, name_regex=None, **kwargs):
     """
-    read an hdf file
+    read an EMAN2 hdf file
     """
     name = guess_name(image_path, name_regex)
 
     with h5py.File(image_path, mode="r") as hdf:
         # TODO: how does this vary?
-        img = hdf["MDF"]["images"]["0"]["image"]
-        data = np.asarray(img)
+        img = hdf["MDF"]["images"]["0"]
+        data = np.asarray(img["image"])
+
+        px_size = img.attrs["EMAN.apix_x"].item()
 
     img = Image(
         data=data,
         experiment_id=name,
-        pixel_spacing=None or 0,
+        pixel_spacing=px_size,
         source=image_path,
         stack=False,
     )

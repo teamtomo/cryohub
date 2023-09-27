@@ -63,6 +63,7 @@ and particle data in the following formats:
 - Relion `.star`
 - Dynamo `.tbl`
 - Cryolo `.cbox` and `.box`
+- EMAN2 `.json`
 
 Writer functions currently exist for:
 - `.mrc`

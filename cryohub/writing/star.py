@@ -44,14 +44,16 @@ def write_star(particles, file_path, version="4.0", overwrite=False):
                 df[Relion.SHIFT_HEADERS[version]] = shift
 
         # invert rotations for relion and convert to euler (in degrees)
-        ori = poseset.orientation.inv()
+        ori = poseset.orientation
         if ori is not None:
-            rotvec = ori.as_rotvec(degrees=True)
+            rotvec = ori.inv().as_rotvec(degrees=True)
             if np.allclose(rotvec[:, :2], 0):
                 # single angle world
                 df[Relion.EULER_HEADERS[2]] = rotvec[:, 2]
             else:
-                df[Relion.EULER_HEADERS] = ori.as_euler(Relion.EULER, degrees=True)
+                df[Relion.EULER_HEADERS] = ori.inv().as_euler(
+                    Relion.EULER, degrees=True
+                )
 
         # useful to keep around
         df["experiment_id"] = poseset.experiment_id

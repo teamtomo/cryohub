@@ -34,14 +34,16 @@ def write_tbl(particles, file_path):
                 df[Dynamo.SHIFT_HEADERS] = shift
 
         # invert rotations for Dynamo and convert to euler (in degrees)
-        ori = poseset.orientation.inv()
+        ori = poseset.orientation
         if ori is not None:
-            rotvec = ori.as_rotvec(degrees=True)
+            rotvec = ori.inv().as_rotvec(degrees=True)
             if np.allclose(rotvec[:, :2], 0):
                 # single angle world
                 df[Dynamo.EULER_HEADERS[2]] = rotvec[:, 2]
             else:
-                df[Dynamo.EULER_HEADERS[3]] = ori.as_euler(Dynamo.EULER, degrees=True)
+                df[Dynamo.EULER_HEADERS[3]] = ori.inv().as_euler(
+                    Dynamo.EULER, degrees=True
+                )
 
         # useful to keep around
         df["experiment_id"] = poseset.experiment_id

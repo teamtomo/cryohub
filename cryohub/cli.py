@@ -10,10 +10,31 @@ def cli():
     pass
 
 
-@cli.command()
-@click.argument(
-    "inputs", nargs=-1, type=click.Path(exists=True, dir_okay=True, resolve_path=True)
-)
+def _process_extra_kwargs(kwarg_list):
+    kwargs_processed = {}
+    try:
+        for k, v in zip(kwarg_list[::2], kwarg_list[1::2], strict=True):
+            if not k.startswith("-"):
+                raise click.UsageError(
+                    "Only key-value pairs are allowed as extra arguments."
+                )
+
+            for typ in (float, int, str):
+                try:
+                    v = typ(v)
+                    break
+                except (TypeError, ValueError):
+                    continue
+                else:
+                    raise TypeError('could not convert "{v}" to a usable type')
+            kwargs_processed[k.strip("-").replace("-", "_")] = v
+    except ValueError:
+        raise click.UsageError("Only key-value pairs are allowed as extra arguments.")
+    return kwargs_processed
+
+
+@cli.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument("input", type=click.Path(exists=True, dir_okay=True, resolve_path=True))
 @click.argument("output", type=click.Path(dir_okay=False, resolve_path=True))
 @click.option(
     "-n",
@@ -24,7 +45,8 @@ def cli():
 @click.option(
     "-f", "--overwrite", is_flag=True, help="Overwrite existing output files."
 )
-def convert(inputs, output, name_regex, overwrite):
+@click.argument("kwargs", nargs=-1, type=click.UNPROCESSED)
+def convert(input, output, name_regex, overwrite, kwargs):
     """Convert files between available formats."""
     from pathlib import Path
 
@@ -35,10 +57,11 @@ def convert(inputs, output, name_regex, overwrite):
         raise click.UsageError(f"{output} already exists. Use -f to overwrite.")
 
     data = cryohub.read(  # noqa: F841
-        *inputs,
+        input,
         name_regex=name_regex,
+        **_process_extra_kwargs(kwargs),
     )
-    cryohub.write(data, output)
+    cryohub.write(data, output, overwrite=overwrite)
 
 
 @cli.command()
@@ -78,12 +101,14 @@ def view(paths, name_regex, strict, lazy):
 
         cryohub /path/to/dir/MyProtein* -n 'Protein_\d+'
     """
-    if not paths:
-        paths = ["./*"]
+    from inspect import cleandoc
 
     from IPython.terminal.embed import InteractiveShellEmbed
 
     import cryohub
+
+    if not paths:
+        paths = ["./*"]
 
     data = cryohub.read(  # noqa: F841
         *paths,
@@ -93,7 +118,11 @@ def view(paths, name_regex, strict, lazy):
     )
 
     # set up ipython shell nicely
-    banner = "=== cryohub ==="
-    sh = InteractiveShellEmbed(banner2=banner)
-    sh.push("data")
+    banner = """
+        === cryohub ===
+        - loaded data is in the list `data`
+    """
+    # sh.instance() needed due to reggression in ipython
+    # https://github.com/ipython/ipython/issues/13966#issuecomment-1696137868
+    sh = InteractiveShellEmbed.instance(banner2=cleandoc(banner))
     sh()

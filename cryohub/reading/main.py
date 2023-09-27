@@ -4,7 +4,8 @@ from ..utils.generic import ParseError, listify
 from .box import read_box
 from .cbox import read_cbox
 from .em import read_em
-from .hdf import read_hdf
+from .eman2_hdf import read_eman2_hdf
+from .eman2_json import read_eman2_json
 from .mrc import read_mrc
 from .star import read_star
 from .tbl import read_tbl
@@ -18,14 +19,12 @@ readers = {
     (".box",): (read_box,),
     (".cbox",): (read_cbox,),
     (".em",): (read_em,),
-    (".hdf",): (read_hdf,),
+    (".hdf",): (read_eman2_hdf,),
+    (".json",): (read_eman2_json,),
     (".mrc", ".mrcs", ".st", ".map"): (read_mrc,),
     (".star",): (read_star,),
     (".tbl",): (read_tbl,),
-    (
-        ".tif",
-        ".tiff",
-    ): (read_tif,),
+    (".tif", ".tiff"): (read_tif,),
 }
 
 known_formats = [ext for formats in readers for ext in formats]
