@@ -63,7 +63,7 @@ and particle data in the following formats:
 - Relion `.star`
 - Dynamo `.tbl`
 - Cryolo `.cbox` and `.box`
-- EMAN2 `.json`
+- EMAN2 `.json`[^1]
 
 Writer functions currently exist for:
 - `.mrc`
@@ -71,6 +71,8 @@ Writer functions currently exist for:
 - Dynamo `.em`
 - Relion `.star`
 - Dynamo `.tbl`
+
+[^1]: EMAN2 uses the center of the tomogram as the origin for particle coordinates. This means that when opening a tomogram, you'll have to recenter the particles based on its dimensions. To do so automatically, you can use the `center_on_tomo` argument to provide the `hdf` file with the tomogram you want to use.
 
 ## Image data
 
