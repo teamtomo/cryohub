@@ -56,6 +56,7 @@ print(data[0])
 
 Currently `cryohub` is capable of reading images in the following formats:
 - `.mrc` (and the `.mrcs`, `.st`, `.map` variants)
+= `.tif(f)`
 - Dynamo `.em`
 - EMAN2 `.hdf`
 
