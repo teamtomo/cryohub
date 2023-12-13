@@ -30,7 +30,7 @@ def construct_poseset(
     if pixel_size is not None:
         pixel_size = np.asarray(pixel_size, dtype=float)
         # XXX TODO: remove the following and support variable pixel sizes?
-        pixel_size = pixel_size.ravel()[0]
+        pixel_size = pixel_size.ravel()[0] or 1  # if zero we get a bunch of nans
         if rescale_shift and shift is not None:
             shift = shift / pixel_size
     elif rescale_shift:
