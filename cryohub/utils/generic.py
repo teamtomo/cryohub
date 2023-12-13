@@ -33,7 +33,7 @@ def guess_name(string, name_regex=None):
     """
     if string is None:
         return "NO_ID"
-    string = Path(string).stem
+    string = Path(str(string)).stem
     name_regex = listify(name_regex)
     regexes = list(common_name_regexes)
     regexes = name_regex + regexes
