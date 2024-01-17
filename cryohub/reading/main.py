@@ -21,7 +21,7 @@ readers = {
     (".em",): (read_em,),
     (".hdf",): (read_eman2_hdf,),
     (".json",): (read_eman2_json,),
-    (".mrc", ".mrcs", ".st", ".map"): (read_mrc,),
+    (".mrc", ".mrcs", ".st", ".map", ".rec"): (read_mrc,),
     (".star",): (read_star,),
     (".tbl",): (read_tbl,),
     (".tif", ".tiff"): (read_tif,),

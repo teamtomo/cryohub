@@ -23,7 +23,7 @@ writers_poses = {
 writers_images = {
     (".hdf",): (write_hdf,),
     (".em",): (write_em,),
-    (".mrc", ".mrcs", ".st", ".map", ""): (write_mrc,),
+    (".mrc", ".mrcs", ".st", ".map", ".rec", ""): (write_mrc,),
 }
 
 
