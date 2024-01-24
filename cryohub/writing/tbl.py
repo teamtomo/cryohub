@@ -8,12 +8,18 @@ from ..utils.constants import Dynamo
 from ..utils.generic import listify
 
 
-def write_tbl(particles, file_path):
+def write_tbl(particles, file_path, overwrite=False):
     """
     write particle data to disk as a dynamo .tbl file
     """
     particles = listify(particles)
     file_path = Path(file_path)
+
+    if not file_path.suffix:
+        file_path = file_path.with_suffix(".tbl")
+
+    if file_path.exists() and not overwrite:
+        raise FileExistsError(file_path)
 
     dataframes = []
     for poseset in particles:
@@ -38,8 +44,8 @@ def write_tbl(particles, file_path):
         if ori is not None:
             rotvec = ori.inv().as_rotvec(degrees=True)
             if np.allclose(rotvec[:, :2], 0):
-                # single angle world
-                df[Dynamo.EULER_HEADERS[2]] = rotvec[:, 2]
+                # single angle world (extra ":" after 2 is to match 2d shapes)
+                df[Dynamo.EULER_HEADERS[2]] = rotvec[:, 2:]
             else:
                 df[Dynamo.EULER_HEADERS[3]] = ori.inv().as_euler(
                     Dynamo.EULER, degrees=True
@@ -58,6 +64,4 @@ def write_tbl(particles, file_path):
 
     df = pd.concat(dataframes)
 
-    if not file_path.suffix:
-        file_path = file_path.with_suffix(".tbl")
     dynamotable.write(df, file_path)
